@@ -1,9 +1,9 @@
-const CACHE = "retirement-planner-v3";
+const CACHE = "retirement-planner-v4";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles-v3.css?v=3",
-  "./retirement_app.js?v=3",
+  "./styles-v4.css?v=4",
+  "./retirement_app.js?v=4",
   "./manifest.json",
   "./icon.svg",
   "./icon-192.png",
@@ -30,10 +30,10 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     fetch(event.request, {cache:"no-store"})
       .then(response => {
-        const copy = response.clone();
-        caches.open(CACHE).then(cache => cache.put(event.request, copy));
+        const copy=response.clone();
+        caches.open(CACHE).then(cache=>cache.put(event.request,copy));
         return response;
       })
-      .catch(() => caches.match(event.request).then(r => r || caches.match("./index.html")))
+      .catch(()=>caches.match(event.request).then(r=>r||caches.match("./index.html")))
   );
 });
