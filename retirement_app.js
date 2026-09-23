@@ -4,14 +4,14 @@ const DEFAULT_KEY="retirement-planner-personal-defaults-v2";
 const GENERIC={
  currentAge:45,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
  vooBalance:500000,k401Balance:500000,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:55,voo2:30000,k2:30000,
- high3:200000,divYield:1.3,expenses:150000,ordinaryTaxPct:20,dividendTaxPct:15,
+ high3:200000,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,ordinaryTaxPct:20,dividendTaxPct:15,
  moonlightIncome:0,moonlightThroughAge:70,
  fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",startDate:"2018-12-01"
 };
 const LIMITS={
  currentAge:[18,90],spouseAge:[18,100],retirementAge:[19,100],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
  vooBalance:[0,1e11],k401Balance:[0,1e11],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
- voo2:[0,1e9],k2:[0,1e9],high3:[0,1e7],divYield:[0,15],expenses:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],
+ voo2:[0,1e9],k2:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],
  moonlightIncome:[0,1e8],moonlightThroughAge:[18,100],fixedPct:[0,20]
 };
 const $=id=>document.getElementById(id);
@@ -46,24 +46,35 @@ function bindInputs(){
  });
 }
 
+function syncDividendControls(){
+ const mode=$("divUseMode");
+ if(!mode)return;
+ mode.querySelectorAll("button").forEach(b=>b.classList.toggle("active",(b.dataset.divUse==="on")===!!s.useVooDividends));
+ const pctInput=document.querySelector('[data-key="vooDividendUsePct"]');
+ if(pctInput)pctInput.disabled=!s.useVooDividends;
+ const field=$("divPctField");
+ if(field)field.style.opacity=s.useVooDividends?"1":".5";
+}
+
 bindInputs();
 $("startDate").value=s.startDate;
 $("startDate").addEventListener("change",e=>{s.startDate=e.target.value||GENERIC.startDate;savePlan();render()});
 $("userSS").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.userClaim=+b.dataset.age;savePlan();render()});
 $("spouseSS").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.spouseClaim=+b.dataset.age;savePlan();render()});
 $("mode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.mode=b.dataset.mode;savePlan();render()});
+$("divUseMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.useVooDividends=b.dataset.divUse==="on";savePlan();syncDividendControls();render()});
 $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{chartMode=b.dataset.chart;$("tabs").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));draw()});
 
 $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringify(s));savePlan();$("saved").textContent="Saved as your local defaults"}catch(e){showWarning("Could not save local defaults in this browser.")}};
-$("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();savePlan();render()};
-$("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:4,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
+$("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:7,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
-$("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
+$("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
 function syncInputs(){$("startDate").value=s.startDate;document.querySelectorAll("[data-key]").forEach(showInput)}
 function realContributionIncrease(nominalPct){
- const nominal=nominalPct/100, inflation=s.inflationPct/100;
+ const nominal=nominalPct/100,inflation=s.inflationPct/100;
  return (1+nominal)/(1+inflation)-1;
 }
 function contribAt(age,kind){
@@ -91,9 +102,9 @@ function fers(){
  return{svc,m,annual};
 }
 const ssAnnual=a=>a===62?35628:62172;
-function taxesFor(div,fersIncome,ss,moonlight,wd){
+function taxesFor(totalDiv,fersIncome,ss,moonlight,wd){
  const ord=s.ordinaryTaxPct/100,divTax=s.dividendTaxPct/100;
- return div*divTax+(fersIncome+moonlight+ss*.85+wd)*ord;
+ return totalDiv*divTax+(fersIncome+moonlight+ss*.85+wd)*ord;
 }
 function retirement(p,f){
  const r=s.realReturnPct/100,start=Math.ceil(s.retirementAge);
@@ -105,17 +116,32 @@ function retirement(p,f){
   const ss=u+sp;
   const moonlight=s.moonlightIncome>0&&age<=s.moonlightThroughAge?s.moonlightIncome:0;
   const div=voo*s.divYield/100;
+  const usePct=s.useVooDividends?Math.max(0,Math.min(100,s.vooDividendUsePct))/100:0;
+  const divUsed=div*usePct;
+  const divReinvested=div-divUsed;
+
+  // All qualified dividends are taxable even if reinvested.
   const taxesBase=taxesFor(div,f.annual,ss,moonlight,0);
-  const afterTaxBase=div+f.annual+ss+moonlight-taxesBase;
+  const afterTaxBase=divUsed+f.annual+ss+moonlight-taxesBase;
   const ordNet=Math.max(.01,1-s.ordinaryTaxPct/100);
   let required=s.mode==="fixed"?k*s.fixedPct/100:Math.max(0,(s.expenses-afterTaxBase)/ordNet);
   const availableK=Math.max(0,k*(1+r));
   const wd=Math.min(required,availableK);
   const taxes=taxesFor(div,f.annual,ss,moonlight,wd);
-  const gross=div+f.annual+ss+moonlight+wd;
-  const afterTax=gross-taxes,surplus=afterTax-s.expenses;
-  const endV=Math.max(0,voo*(1+r)-div),endK=Math.max(0,availableK-wd);
-  rows.push({age,spa,vooStart:voo,kStart:k,div,fers:f.annual,u,sp,ss,moonlight,wd,gross,taxes,afterTax,expenses:s.expenses,surplus,baseAfterTax:afterTaxBase,endV,endK,endTotal:endV+endK,required});
+
+  // "afterTax" is cash available for spending; reinvested dividends are deliberately excluded.
+  const cashGross=divUsed+f.annual+ss+moonlight+wd;
+  const taxableGross=div+f.annual+ss+moonlight+wd;
+  const afterTax=cashGross-taxes,surplus=afterTax-s.expenses;
+
+  // Real return is a total return. Only the dividend portion actually spent leaves VOO.
+  const endV=Math.max(0,voo*(1+r)-divUsed),endK=Math.max(0,availableK-wd);
+
+  rows.push({
+   age,spa,vooStart:voo,kStart:k,div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,wd,
+   gross:taxableGross,cashGross,taxes,afterTax,expenses:s.expenses,surplus,baseAfterTax:afterTaxBase,
+   endV,endK,endTotal:endV+endK,required
+  });
   voo=endV;k=endK;
  }
  return{rows};
@@ -152,31 +178,46 @@ function render(){
  $("kOut").textContent=money(p.k);$("kSub").textContent="Growth "+money(p.kg)+" · contributions "+money(p.kc);
  $("age95Out").textContent=money(age95.endTotal);$("age95Sub").textContent="VOO "+money(age95.endV)+" · 401(k) "+money(age95.endK);
  $("targetOut").textContent=c.target?"Age "+Math.round(c.target):"Not reached";
+
  const growthNote=$("contributionGrowthNote");
  if(growthNote){
   const vr=realContributionIncrease(s.vooIncreasePct)*100,kr=realContributionIncrease(s.kIncreasePct)*100;
   growthNote.textContent=`Current real contribution growth: VOO ${vr.toFixed(2)}%/yr · 401(k) ${kr.toFixed(2)}%/yr.`;
  }
+
+ syncDividendControls();
+
  $("service").textContent=f.svc.toFixed(1)+" years";$("fers").textContent=money(f.annual)+"/yr · "+money(f.annual/12)+"/mo";$("fersTop").textContent=money(f.annual/12)+"/mo";
  $("userSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.userClaim));
  $("spouseSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.spouseClaim));
  $("userBenefit").textContent=money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
  $("spouseBenefit").textContent=money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";
  $("mode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset.mode===s.mode));$("fixedWrap").style.display=s.mode==="fixed"?"block":"none";
+
  $("income").textContent=money(b.afterTax)+"/yr";$("incomeMo").textContent=`Age ${b.age} · ${money(b.afterTax/12)}/mo after estimated tax`;$("expenseOut").textContent=money(s.expenses)+"/yr";
  $("surplus").textContent=(b.surplus>=0?"+":"−")+money(Math.abs(b.surplus))+"/yr";$("surplus").className="metric-sm "+(b.surplus>=0?"green":"red");
+
  $("pre401").textContent=money(b.baseAfterTax)+"/yr";
- $("preDetail").textContent="After-tax VOO dividends + FERS + Social Security"+(b.moonlight>0?" + moonlighting":"")+", before 401(k)";
+ const divPhrase=b.divUsed>0
+  ?`used VOO dividends (${money(b.divUsed)})`
+  :`no VOO dividends used`;
+ $("preDetail").textContent=`After-tax cash from ${divPhrase} + FERS + Social Security${b.moonlight>0?" + moonlighting":""}, before 401(k); tax includes all VOO dividends`;
+
  const cov=s.expenses?b.baseAfterTax/s.expenses*100:100;$("coverage").style.width=Math.min(100,Math.max(0,cov))+"%";$("coverageText").textContent=cov.toFixed(1)+"% of after-tax expenses covered before 401(k)";
  $("withdrawal").textContent=money(b.wd)+"/yr";$("withdrawalSub").textContent=money(b.wd/12)+"/mo gross · "+(b.kStart?b.wd/b.kStart*100:0).toFixed(2)+"% of that year’s starting 401(k)";
- $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross income";
+ $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross taxable income (includes reinvested dividends)";
+
  const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)}</div></div>`}).join("");
+
  const stagesEl=$("incomeStages");
  if(stagesEl){stagesEl.innerHTML=c.stages.map(st=>{
    const r=st.startRow,range=st.start===st.end?`Age ${st.start}`:`Ages ${st.start}–${st.end}`;
    const spouseEnd=st.endRow.spa;
    const spouseRange=Math.abs(r.spa-spouseEnd)<.01?`spouse ${r.spa.toFixed(1)}`:`spouse ${r.spa.toFixed(1)}–${spouseEnd.toFixed(1)}`;
-   return `<div class="stage"><div class="row"><div><div style="font-size:13px;font-weight:700">${stageTitle(r)}</div><div class="tiny">${range} · ${spouseRange}</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:700">${money(r.afterTax)}/yr</div><div class="tiny">${money(r.afterTax/12)}/mo after tax</div></div></div><div class="tiny" style="margin-top:6px">VOO dividends ${money(r.div)} · FERS ${money(r.fers)} · Moonlighting ${money(r.moonlight)} · SS ${money(r.ss)} · 401(k) ${money(r.wd)}</div></div>`;
+   const divText=r.divUsed>0
+    ?`VOO div used ${money(r.divUsed)} · reinvested ${money(r.divReinvested)}`
+    :`VOO div used ${money(0)} · reinvested ${money(r.div)}`;
+   return `<div class="stage"><div class="row"><div><div style="font-size:13px;font-weight:700">${stageTitle(r)}</div><div class="tiny">${range} · ${spouseRange}</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:700">${money(r.afterTax)}/yr</div><div class="tiny">${money(r.afterTax/12)}/mo after tax</div></div></div><div class="tiny" style="margin-top:6px">${divText} · FERS ${money(r.fers)} · Moonlighting ${money(r.moonlight)} · SS ${money(r.ss)} · 401(k) ${money(r.wd)}</div></div>`;
   }).join("")}
  draw(c);
 }
@@ -198,12 +239,12 @@ function draw(existing){
  }else if(chartMode==="decumulation"){
   const d=c.ret.rows,max=Math.max(...d.map(x=>x.endTotal),1)*1.08,a=axes(max,d[0].age,d.at(-1).age);let h=a.g+ticks(d,a);
   h+=poly(d,a,"endTotal","--s2",4)+poly(d,a,"endV","--s3",2.5)+poly(d,a,"endK","--s4",2.5);
-  $("chart").innerHTML=h;$("chartSub").textContent="Year-end retirement balances after dividends and 401(k) withdrawals.";
+  $("chart").innerHTML=h;$("chartSub").textContent="Year-end retirement balances after VOO dividends used for spending and 401(k) withdrawals.";
  }else if(chartMode==="income"){
   const d=c.ret.rows,max=Math.max(s.expenses,...d.map(x=>x.afterTax),...d.map(x=>x.baseAfterTax),1)*1.1,a=axes(max,d[0].age,d.at(-1).age);let h=a.g+ticks(d,a);
   h+=poly(d,a,"afterTax","--s2",4)+poly(d,a,"baseAfterTax","--s3",2.5);
   const expRows=d.map(x=>({...x,expenseLine:s.expenses}));h+=poly(expRows,a,"expenseLine","--s5",2.5,"7 5");
-  $("chart").innerHTML=h;$("chartSub").textContent="After-tax income, income before 401(k), and expenses by age; SS and moonlighting transitions are reflected automatically.";
+  $("chart").innerHTML=h;$("chartSub").textContent="After-tax spendable income, income before 401(k), and expenses by age; reinvested VOO dividends are not counted as spendable cash.";
  }else{
   const rates=[4,5,6,7,8],vals=rates.map(x=>project(x).t),max=Math.max(...vals,s.targetPortfolio,1)*1.1,a=axes(max,0,6);let h=a.g;
   rates.forEach((x,i)=>{const xx=a.L+34+i*124,yy=a.y(vals[i]),bh=a.T+a.ph-yy;h+=`<rect x="${xx}" y="${yy}" width="88" height="${bh}" rx="8" fill="var(--s${2+i%5})"/><text x="${xx+44}" y="${a.H-14}" text-anchor="middle" font-size="12" fill="var(--muted)">${x}%</text><text x="${xx+44}" y="${Math.max(14,yy-7)}" text-anchor="middle" font-size="11" fill="var(--text)">${compact(vals[i])}</text>`});
@@ -211,6 +252,7 @@ function draw(existing){
  }
 }
 
+syncDividendControls();
 render();savePlan();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
 })();

@@ -1,24 +1,24 @@
-Retirement Planner v5 update
+Retirement Planner v7 — VOO dividend-use control
 
-Replace these three files in the ROOT of your GitHub repository:
-1. index.html
-2. retirement_app.js
-3. sw.js
+This is intentionally a minimal change from v6.
 
-No CSS replacement is needed. This update continues to use styles-v4.css.
+Replace ONLY these files in the root of the GitHub repository:
+- index.html
+- retirement_app.js
+- sw.js
 
-New features:
-- Annual gross moonlighting income input
-- Moonlighting-through-your-age input (inclusive)
-- Dynamic retirement income stages
-- Separate bridge period before Social Security starts
-- Separate stages as each spouse's Social Security turns on
-- Moonlighting included in approximate ordinary-income taxes
-- Moonlighting reduces need-based 401(k) withdrawals
-- Income-vs-expenses chart reflects moonlighting and Social Security transitions
-- Existing locally saved values migrate automatically; new moonlighting fields default to $0 through age 70
+Do NOT replace styles-v4.css.
 
-After committing the files:
-- Wait for GitHub Pages to deploy
-- Open the site once in Safari and refresh
-- Close/reopen the Home Screen app so service-worker v5 takes over
+New feature:
+- Toggle VOO dividend use On / Off.
+- When On, choose 0–100% of VOO dividends to use for retirement spending.
+- The unused percentage is reinvested in VOO.
+- When Off, 100% of VOO dividends are reinvested.
+- All VOO dividends remain taxable whether spent or reinvested.
+- The assumed real return remains a TOTAL return, so only the dividends actually spent are subtracted from VOO. This avoids double-counting.
+- Existing saved plans migrate automatically and default to the prior behavior: On + 100% used.
+
+Examples:
+- On + 100%: exactly the prior v6 behavior.
+- On + 50%: half used for spending, half reinvested.
+- Off: none used for spending, all reinvested.
