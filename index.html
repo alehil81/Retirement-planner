@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles-v4.css?v=4">
+<link rel="stylesheet" href="styles-v4.css?v=5">
 <title>Retirement Planner</title>
 </head>
 <body>
@@ -74,17 +74,19 @@
  </details>
 
  <details open>
-  <summary><span>Retirement spending & taxes</span><span class="muted">Approximate</span></summary>
+  <summary><span>Retirement spending, work & taxes</span><span class="muted">Approximate</span></summary>
   <div class="fields" style="padding:8px 0 12px">
    <div class="field"><label>VOO dividend yield</label><div class="inputwrap"><input data-key="divYield" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Annual after-tax expenses</label><div class="inputwrap"><span class="prefix">$</span><input data-key="expenses" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Estimated effective ordinary tax rate</label><div class="inputwrap"><input data-key="ordinaryTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Qualified dividend tax rate</label><div class="inputwrap"><input data-key="dividendTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+   <div class="field"><label>Annual moonlighting income</label><div class="inputwrap"><span class="prefix">$</span><input data-key="moonlightIncome" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Moonlighting through your age</label><input data-key="moonlightThroughAge" type="text" inputmode="decimal"></div>
   </div>
   <div class="tiny" style="margin-bottom:6px">401(k) withdrawal method</div>
   <div class="seg" id="mode"><button type="button" data-mode="need"><strong>Need-based</strong><span>Fill after-tax gap</span></button><button type="button" data-mode="fixed"><strong>Fixed rate</strong><span>Choose rate</span></button></div>
   <div id="fixedWrap" class="field" style="display:none;margin-top:12px"><label>Fixed withdrawal rate</label><div class="inputwrap"><input data-key="fixedPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
-  <div class="tiny" style="padding:12px 0 14px">Tax estimate is intentionally simple: FERS and 401(k) withdrawals use the ordinary effective rate, qualified VOO dividends use the dividend rate, and 85% of Social Security is assumed taxable at the ordinary rate.</div>
+  <div class="tiny" style="padding:12px 0 14px">Tax estimate is intentionally simple: FERS, moonlighting, and 401(k) withdrawals use the ordinary effective rate, qualified VOO dividends use the dividend rate, and 85% of Social Security is assumed taxable at the ordinary rate. Moonlighting is included through the selected age, inclusive.</div>
  </details>
 
  <details>
@@ -102,6 +104,7 @@
  <div class="panel"><div class="tiny">INCOME BEFORE 401(K)</div><div id="pre401" class="metric">—</div><div id="preDetail" class="muted">—</div><div class="bar" style="margin-top:10px"><span id="coverage"></span></div><div id="coverageText" class="tiny" style="margin-top:6px">—</div></div>
  <div class="panel"><div class="tiny">REQUIRED 401(K) WITHDRAWAL</div><div id="withdrawal" class="metric">—</div><div id="withdrawalSub" class="muted">—</div></div>
  <div class="panel"><div class="tiny">ESTIMATED TAXES</div><div id="taxesOut" class="metric">—</div><div id="grossIncomeOut" class="muted">—</div></div>
+ <div class="panel"><div style="font-size:14px;font-weight:700">Retirement income stages</div><div class="tiny" style="margin-top:3px">Automatically changes when moonlighting or either Social Security benefit starts or stops.</div><div id="incomeStages" style="margin-top:6px"></div></div>
  <div class="panel"><div style="font-size:14px;font-weight:700">Retirement balance milestones</div><div id="milestones" class="milestones"></div></div>
 </div>
 </section>
@@ -118,13 +121,13 @@
   <p>Accumulation and retirement projections are deterministic, not Monte Carlo. The selected real return is applied every year, so sequence-of-returns risk is not modeled.</p>
   <p>Contribution escalation is applied separately to VOO and 401(k). Each phase begins at its entered base contribution and escalates annually thereafter.</p>
   <p>During retirement, VOO dividends are paid out as income. To avoid double-counting dividends, VOO ending balance is modeled as beginning balance × (1 + real total return) minus dividends. 401(k) ending balance is beginning balance × (1 + real return) minus withdrawals.</p>
-  <p>Need-based 401(k) withdrawals are calculated to fill the estimated after-tax spending gap, subject to the available 401(k) balance.</p>
+  <p>Need-based 401(k) withdrawals are calculated to fill the estimated after-tax spending gap, subject to the available 401(k) balance. Optional moonlighting income is included through the selected age and reduces the required 401(k) draw during those years.</p>
   <p>FERS estimate uses high-3 × service years × 1.0%, or 1.1% at age 62+ with at least 20 years of service. It does not model survivor-benefit reductions or detailed COLA rules.</p>
   <p>Social Security uses 2026 maximum-benefit planning benchmarks: $2,969/month at 62 and $5,181/month at 70 per person. Actual future benefits may differ.</p>
   <p>Taxes are only an approximation, not a tax return calculation. RMD rules, Medicare IRMAA, capital-gain realization from VOO share sales, state taxes, and detailed Social Security taxation are not modeled.</p>
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=4"></script>
+<script src="retirement_app.js?v=5"></script>
 </body>
 </html>
