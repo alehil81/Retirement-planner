@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles-v4.css?v=5">
+<link rel="stylesheet" href="styles-v4.css?v=6">
 <title>Retirement Planner</title>
 </head>
 <body>
@@ -44,15 +44,15 @@
    <div class="field"><label>Real return</label><div class="inputwrap"><input data-key="realReturnPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>VOO balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="vooBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>401(k) balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k401Balance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Phase 1 VOO / yr</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Phase 1 401(k) / yr</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Annual VOO contribution increase</label><div class="inputwrap"><input data-key="vooIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
-   <div class="field"><label>Annual 401(k) contribution increase</label><div class="inputwrap"><input data-key="kIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+   <div class="field"><label>Phase 1 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Phase 1 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Annual VOO contribution increase (nominal)</label><div class="inputwrap"><input data-key="vooIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+   <div class="field"><label>Annual 401(k) contribution increase (nominal)</label><div class="inputwrap"><input data-key="kIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Phase 2 starts at age</label><input data-key="changeAge" type="text" inputmode="decimal"></div><div></div>
-   <div class="field"><label>Phase 2 VOO / yr</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Phase 2 401(k) / yr</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Phase 2 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Phase 2 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
   </div>
-  <div class="tiny" style="padding-bottom:12px">Contribution increases compound annually within each phase. Phase 2 restarts from the entered Phase 2 base amount, then continues escalating.</div>
+  <div class="tiny" style="padding-bottom:12px">Contribution dollar inputs are in today's dollars. Increase rates are nominal; the app converts them to real growth using inflation before compounding within each phase. <span id="contributionGrowthNote"></span> Phase 2 restarts from the entered Phase 2 base amount.</div>
  </details>
 
  <details>
@@ -100,7 +100,7 @@
 </div>
 
 <div class="stack">
- <div class="panel"><div class="tiny">AFTER-TAX INCOME ONCE BOTH SS ACTIVE</div><div id="income" class="metric">—</div><div id="incomeMo" class="muted">—</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><div class="soft"><div class="tiny">AFTER-TAX EXPENSES</div><div id="expenseOut" class="metric-sm">—</div></div><div class="soft"><div class="tiny">SURPLUS / SHORTFALL</div><div id="surplus" class="metric-sm">—</div></div></div></div>
+ <div class="panel"><div class="tiny">FIRST YEAR BOTH SS BENEFITS ACTIVE</div><div id="income" class="metric">—</div><div id="incomeMo" class="muted">—</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><div class="soft"><div class="tiny">AFTER-TAX EXPENSES</div><div id="expenseOut" class="metric-sm">—</div></div><div class="soft"><div class="tiny">SURPLUS / SHORTFALL</div><div id="surplus" class="metric-sm">—</div></div></div></div>
  <div class="panel"><div class="tiny">INCOME BEFORE 401(K)</div><div id="pre401" class="metric">—</div><div id="preDetail" class="muted">—</div><div class="bar" style="margin-top:10px"><span id="coverage"></span></div><div id="coverageText" class="tiny" style="margin-top:6px">—</div></div>
  <div class="panel"><div class="tiny">REQUIRED 401(K) WITHDRAWAL</div><div id="withdrawal" class="metric">—</div><div id="withdrawalSub" class="muted">—</div></div>
  <div class="panel"><div class="tiny">ESTIMATED TAXES</div><div id="taxesOut" class="metric">—</div><div id="grossIncomeOut" class="muted">—</div></div>
@@ -128,6 +128,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=5"></script>
+<script src="retirement_app.js?v=6"></script>
 </body>
 </html>

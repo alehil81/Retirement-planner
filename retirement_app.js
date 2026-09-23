@@ -57,15 +57,20 @@ $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{chartMode=b.datas
 $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringify(s));savePlan();$("saved").textContent="Saved as your local defaults"}catch(e){showWarning("Could not save local defaults in this browser.")}};
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:3,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:4,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
 function syncInputs(){$("startDate").value=s.startDate;document.querySelectorAll("[data-key]").forEach(showInput)}
+function realContributionIncrease(nominalPct){
+ const nominal=nominalPct/100, inflation=s.inflationPct/100;
+ return (1+nominal)/(1+inflation)-1;
+}
 function contribAt(age,kind){
  const phase1=age<s.changeAge;
  const base=kind==="voo"?(phase1?s.voo1:s.voo2):(phase1?s.k1:s.k2);
- const inc=(kind==="voo"?s.vooIncreasePct:s.kIncreasePct)/100;
+ const nominalPct=kind==="voo"?s.vooIncreasePct:s.kIncreasePct;
+ const inc=realContributionIncrease(nominalPct);
  const n=phase1?Math.max(0,Math.floor(age-s.currentAge)):Math.max(0,Math.floor(age-s.changeAge));
  return Math.max(0,base*Math.pow(1+inc,n));
 }
@@ -147,13 +152,18 @@ function render(){
  $("kOut").textContent=money(p.k);$("kSub").textContent="Growth "+money(p.kg)+" · contributions "+money(p.kc);
  $("age95Out").textContent=money(age95.endTotal);$("age95Sub").textContent="VOO "+money(age95.endV)+" · 401(k) "+money(age95.endK);
  $("targetOut").textContent=c.target?"Age "+Math.round(c.target):"Not reached";
+ const growthNote=$("contributionGrowthNote");
+ if(growthNote){
+  const vr=realContributionIncrease(s.vooIncreasePct)*100,kr=realContributionIncrease(s.kIncreasePct)*100;
+  growthNote.textContent=`Current real contribution growth: VOO ${vr.toFixed(2)}%/yr · 401(k) ${kr.toFixed(2)}%/yr.`;
+ }
  $("service").textContent=f.svc.toFixed(1)+" years";$("fers").textContent=money(f.annual)+"/yr · "+money(f.annual/12)+"/mo";$("fersTop").textContent=money(f.annual/12)+"/mo";
  $("userSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.userClaim));
  $("spouseSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.spouseClaim));
  $("userBenefit").textContent=money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
  $("spouseBenefit").textContent=money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";
  $("mode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset.mode===s.mode));$("fixedWrap").style.display=s.mode==="fixed"?"block":"none";
- $("income").textContent=money(b.afterTax)+"/yr";$("incomeMo").textContent=money(b.afterTax/12)+"/mo after estimated tax";$("expenseOut").textContent=money(s.expenses)+"/yr";
+ $("income").textContent=money(b.afterTax)+"/yr";$("incomeMo").textContent=`Age ${b.age} · ${money(b.afterTax/12)}/mo after estimated tax`;$("expenseOut").textContent=money(s.expenses)+"/yr";
  $("surplus").textContent=(b.surplus>=0?"+":"−")+money(Math.abs(b.surplus))+"/yr";$("surplus").className="metric-sm "+(b.surplus>=0?"green":"red");
  $("pre401").textContent=money(b.baseAfterTax)+"/yr";
  $("preDetail").textContent="After-tax VOO dividends + FERS + Social Security"+(b.moonlight>0?" + moonlighting":"")+", before 401(k)";
