@@ -205,9 +205,9 @@ function render(){
 
  const cov=s.expenses?b.baseAfterTax/s.expenses*100:100;$("coverage").style.width=Math.min(100,Math.max(0,cov))+"%";$("coverageText").textContent=cov.toFixed(1)+"% of after-tax expenses covered before 401(k)";
  $("withdrawal").textContent=money(b.wd)+"/yr";$("withdrawalSub").textContent=money(b.wd/12)+"/mo gross · "+(b.kStart?b.wd/b.kStart*100:0).toFixed(2)+"% of that year’s starting 401(k)";
- $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross taxable income (includes reinvested dividends)";
+ $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross modeled income (includes reinvested dividends)";
 
- const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)}</div></div>`}).join("");
+ const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)}</div></div>`}).join("");
 
  const stagesEl=$("incomeStages");
  if(stagesEl){stagesEl.innerHTML=c.stages.map(st=>{
