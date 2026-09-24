@@ -4,7 +4,7 @@ const DEFAULT_KEY="retirement-planner-personal-defaults-v2";
 const GENERIC={
  currentAge:45,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
  vooBalance:500000,k401Balance:500000,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:55,voo2:30000,k2:30000,
- high3:200000,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,ordinaryTaxPct:20,dividendTaxPct:15,
+ high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,ordinaryTaxPct:20,dividendTaxPct:15,
  moonlightIncome:0,moonlightThroughAge:70,
  fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",startDate:"2018-12-01"
 };
@@ -62,13 +62,14 @@ $("startDate").addEventListener("change",e=>{s.startDate=e.target.value||GENERIC
 $("userSS").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.userClaim=+b.dataset.age;savePlan();render()});
 $("spouseSS").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.spouseClaim=+b.dataset.age;savePlan();render()});
 $("mode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.mode=b.dataset.mode;savePlan();render()});
+$("fersSurvivor").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.fersFullSurvivor=b.dataset.fersSurvivor==="on";savePlan();render()});
 $("divUseMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.useVooDividends=b.dataset.divUse==="on";savePlan();syncDividendControls();render()});
 $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{chartMode=b.dataset.chart;$("tabs").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));draw()});
 
 $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringify(s));savePlan();$("saved").textContent="Saved as your local defaults"}catch(e){showWarning("Could not save local defaults in this browser.")}};
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:7,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:9,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -98,8 +99,9 @@ function project(rate=s.realReturnPct){
 }
 function fers(){
  const start=new Date((s.startDate||GENERIC.startDate)+"T00:00:00Z"),now=new Date(),yrs=s.retirementAge-s.currentAge,end=new Date(now.getTime()+yrs*365.2425*86400000);
- const svc=Math.max(0,(end-start)/(365.2425*86400000)),m=s.retirementAge>=62&&svc>=20?.011:.01,annual=s.high3*svc*m;
- return{svc,m,annual};
+ const svc=Math.max(0,(end-start)/(365.2425*86400000)),m=s.retirementAge>=62&&svc>=20?.011:.01,unreducedAnnual=s.high3*svc*m;
+ const survivorReduction=s.fersFullSurvivor?.10:0,annual=unreducedAnnual*(1-survivorReduction),survivorAnnual=unreducedAnnual*.50;
+ return{svc,m,unreducedAnnual,survivorReduction,survivorAnnual,annual};
 }
 const ssAnnual=a=>a===62?35628:62172;
 function taxesFor(totalDiv,fersIncome,ss,moonlight,wd){
@@ -190,6 +192,7 @@ function render(){
  $("service").textContent=f.svc.toFixed(1)+" years";$("fers").textContent=money(f.annual)+"/yr · "+money(f.annual/12)+"/mo";$("fersTop").textContent=money(f.annual/12)+"/mo";
  $("userSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.userClaim));
  $("spouseSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.spouseClaim));
+ $("fersSurvivor").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.fersSurvivor==="on")===!!s.fersFullSurvivor));
  $("userBenefit").textContent=money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
  $("spouseBenefit").textContent=money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";
  $("mode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset.mode===s.mode));$("fixedWrap").style.display=s.mode==="fixed"?"block":"none";
