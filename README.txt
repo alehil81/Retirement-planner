@@ -1,4 +1,4 @@
-Retirement Planner v14 — Social Security custom range cleanup
+Retirement Planner v15 — RMD integration
 
 Replace only:
 - index.html
@@ -7,10 +7,18 @@ Replace only:
 
 Keep styles-v4.css unchanged.
 
-Change only:
-- Custom Social Security claim age is now restricted to whole ages 62–70.
-- Labels, placeholder text, and validation messages now all say 62–70.
-- Quick buttons remain Age 62 and Age 70.
-- The note now simply states that delayed-retirement credits stop at age 70.
+RMD behavior:
+- RMDs automatically begin at age 75 under current law for this plan.
+- Uses the IRS Uniform Lifetime Table (appropriate for the current spouse age gap).
+- Each year's RMD is based on the prior year-end / beginning-of-year 401(k) balance.
+- The model assumes the first RMD is taken during the age-75 year rather than delayed.
+- Actual 401(k) withdrawal = larger of:
+    * the user's planned need-based/fixed withdrawal, or
+    * the RMD minimum.
+- RMD withdrawals are taxed at the entered ordinary effective tax rate.
+- If an RMD forces out more after-tax cash than is needed for the spending target,
+  the after-tax forced excess is reinvested into VOO at year-end.
+- Retirement income stages split when RMDs begin and display the RMD minimum and
+  any excess RMD reinvested into VOO.
 
-Everything else is unchanged from v13.
+Everything else is unchanged from v14.

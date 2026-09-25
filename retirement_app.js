@@ -85,7 +85,7 @@ $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringi
 $("printPlan").onclick=()=>window.print();
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:14,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:15,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -135,6 +135,15 @@ function ssMonthly(a){
  return Math.round(4152+((factor-1)/.24)*(5181-4152));
 }
 const ssAnnual=a=>ssMonthly(a)*12;
+
+const RMD_DIVISORS={
+ 75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,
+ 85:16.0,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9
+};
+function rmdForAge(age,priorYearEnd401k){
+ const divisor=RMD_DIVISORS[Math.round(age)];
+ return divisor?Math.max(0,priorYearEnd401k)/divisor:0;
+}
 function taxesFor(totalDiv,fersIncome,ss,moonlight,wd){
  const ord=s.ordinaryTaxPct/100,divTax=s.dividendTaxPct/100;
  return totalDiv*divTax+(fersIncome+moonlight+ss*.85+wd)*ord;
@@ -157,23 +166,43 @@ function retirement(p,f){
   const taxesBase=taxesFor(div,f.annual,ss,moonlight,0);
   const afterTaxBase=divUsed+f.annual+ss+moonlight-taxesBase;
   const ordNet=Math.max(.01,1-s.ordinaryTaxPct/100);
-  let required=s.mode==="fixed"?k*s.fixedPct/100:Math.max(0,(s.expenses-afterTaxBase)/ordNet);
+
+  // Planned withdrawal under the user's selected withdrawal method.
+  const plannedWd=s.mode==="fixed"?k*s.fixedPct/100:Math.max(0,(s.expenses-afterTaxBase)/ordNet);
+
+  // Current-law RMD overlay for this personalized plan: begins at age 75.
+  // k is the prior year-end / beginning-of-current-year real 401(k) balance.
+  const rmd=rmdForAge(age,k);
+  const required=Math.max(plannedWd,rmd);
+
   const availableK=Math.max(0,k*(1+r));
   const wd=Math.min(required,availableK);
   const taxes=taxesFor(div,f.annual,ss,moonlight,wd);
 
-  // "afterTax" is cash available for spending; reinvested dividends are deliberately excluded.
   const cashGross=divUsed+f.annual+ss+moonlight+wd;
   const taxableGross=div+f.annual+ss+moonlight+wd;
-  const afterTax=cashGross-taxes,surplus=afterTax-s.expenses;
+  const afterTaxBeforeRmdReinvest=cashGross-taxes;
 
-  // Real return is a total return. Only the dividend portion actually spent leaves VOO.
-  const endV=Math.max(0,voo*(1+r)-divUsed),endK=Math.max(0,availableK-wd),endRoth=Math.max(0,roth*(1+r));
+  // If RMD is larger than the planned withdrawal, reinvest only the after-tax
+  // forced excess into VOO. This prevents forced RMD cash from disappearing
+  // from net-worth projections while leaving all pre-existing surplus behavior unchanged.
+  const forcedRmdGross=rmd>plannedWd?Math.max(0,wd-plannedWd):0;
+  const forcedRmdNet=forcedRmdGross*ordNet;
+  const rmdReinvested=Math.max(0,Math.min(forcedRmdNet,afterTaxBeforeRmdReinvest-s.expenses));
+  const afterTax=afterTaxBeforeRmdReinvest-rmdReinvested;
+  const surplus=afterTax-s.expenses;
+
+  // Real return is a total return. Only VOO dividends used for spending leave VOO.
+  // Any after-tax forced RMD excess is added to VOO at year-end.
+  const endV=Math.max(0,voo*(1+r)-divUsed+rmdReinvested);
+  const endK=Math.max(0,availableK-wd);
+  const endRoth=Math.max(0,roth*(1+r));
 
   rows.push({
-   age,spa,vooStart:voo,kStart:k,div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,wd,
-   gross:taxableGross,cashGross,taxes,afterTax,expenses:s.expenses,surplus,baseAfterTax:afterTaxBase,
-   rothStart:roth,endV,endK,endRoth,endTotal:endV+endK+endRoth,required
+   age,spa,vooStart:voo,kStart:k,div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,
+   plannedWd,rmd,wd,rmdReinvested,
+   gross:taxableGross,cashGross,taxes,afterTax,afterTaxBeforeRmdReinvest,expenses:s.expenses,surplus,
+   baseAfterTax:afterTaxBase,rothStart:roth,endV,endK,endRoth,endTotal:endV+endK+endRoth,required
   });
   voo=endV;k=endK;roth=endRoth;
  }
@@ -182,7 +211,7 @@ function retirement(p,f){
 function groupStages(rows){
  const stages=[];
  for(const row of rows){
-  const key=[row.u>0?1:0,row.sp>0?1:0,row.moonlight>0?1:0].join("-");
+  const key=[row.u>0?1:0,row.sp>0?1:0,row.moonlight>0?1:0,row.rmd>0?1:0].join("-");
   const prev=stages.at(-1);
   if(!prev||prev.key!==key)stages.push({key,start:row.age,end:row.age,startRow:row,endRow:row});
   else{prev.end=row.age;prev.endRow=row}
@@ -193,6 +222,7 @@ function stageTitle(row){
  const ssCount=(row.u>0?1:0)+(row.sp>0?1:0);
  let t=ssCount===0?"Retirement bridge · no Social Security":ssCount===2?"Both Social Security benefits active":row.u>0?"Your Social Security active":"Spouse Social Security active";
  if(row.moonlight>0)t+=" · moonlighting";
+ if(row.rmd>0)t+=" · RMD";
  return t;
 }
 function calc(){
@@ -240,7 +270,7 @@ function render(){
  $("preDetail").textContent=`After-tax cash from ${divPhrase} + FERS + Social Security${b.moonlight>0?" + moonlighting":""}, before 401(k); tax includes all VOO dividends`;
 
  const cov=s.expenses?b.baseAfterTax/s.expenses*100:100;$("coverage").style.width=Math.min(100,Math.max(0,cov))+"%";$("coverageText").textContent=cov.toFixed(1)+"% of after-tax expenses covered before 401(k)";
- $("withdrawal").textContent=money(b.wd)+"/yr";$("withdrawalSub").textContent=money(b.wd/12)+"/mo gross · "+(b.kStart?b.wd/b.kStart*100:0).toFixed(2)+"% of that year’s starting 401(k)";
+ $("withdrawal").textContent=money(b.wd)+"/yr";$("withdrawalSub").textContent=money(b.wd/12)+"/mo gross · "+(b.kStart?b.wd/b.kStart*100:0).toFixed(2)+"% of that year’s starting 401(k)"+(b.rmd>0?" · RMD minimum "+money(b.rmd):"");
  $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross modeled income (includes reinvested dividends)";
 
  const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)} · Roth ${compact(z.endRoth)}</div></div>`}).join("");
@@ -253,7 +283,8 @@ function render(){
    const divText=r.divUsed>0
     ?`VOO div used ${money(r.divUsed)} · reinvested ${money(r.divReinvested)}`
     :`VOO div used ${money(0)} · reinvested ${money(r.div)}`;
-   return `<div class="stage"><div class="row"><div><div style="font-size:13px;font-weight:700">${stageTitle(r)}</div><div class="tiny">${range} · ${spouseRange}</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:700">${money(r.afterTax)}/yr</div><div class="tiny">${money(r.afterTax/12)}/mo after tax</div></div></div><div class="tiny" style="margin-top:6px">${divText} · FERS ${money(r.fers)} · Moonlighting ${money(r.moonlight)} · SS ${money(r.ss)} · 401(k) ${money(r.wd)}</div></div>`;
+   const rmdText=r.rmd>0?` · RMD minimum ${money(r.rmd)}${r.rmdReinvested>0?` · excess RMD→VOO ${money(r.rmdReinvested)}`:""}`:"";
+   return `<div class="stage"><div class="row"><div><div style="font-size:13px;font-weight:700">${stageTitle(r)}</div><div class="tiny">${range} · ${spouseRange}</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:700">${money(r.afterTax)}/yr</div><div class="tiny">${money(r.afterTax/12)}/mo after tax</div></div></div><div class="tiny" style="margin-top:6px">${divText} · FERS ${money(r.fers)} · Moonlighting ${money(r.moonlight)} · SS ${money(r.ss)} · 401(k) ${money(r.wd)}${rmdText}</div></div>`;
   }).join("")}
  draw(c);
 }
@@ -275,7 +306,7 @@ function draw(existing){
  }else if(chartMode==="decumulation"){
   const d=c.ret.rows,max=Math.max(...d.map(x=>x.endTotal),1)*1.08,a=axes(max,d[0].age,d.at(-1).age);let h=a.g+ticks(d,a);
   h+=poly(d,a,"endTotal","--s2",4)+poly(d,a,"endV","--s3",2.5)+poly(d,a,"endK","--s4",2.5);
-  $("chart").innerHTML=h;$("chartSub").textContent="Year-end retirement balances after VOO dividends used for spending and 401(k) withdrawals.";
+  $("chart").innerHTML=h;$("chartSub").textContent="Year-end retirement balances after VOO dividend spending, 401(k) withdrawals, and the RMD overlay from age 75.";
  }else if(chartMode==="income"){
   const d=c.ret.rows,max=Math.max(s.expenses,...d.map(x=>x.afterTax),...d.map(x=>x.baseAfterTax),1)*1.1,a=axes(max,d[0].age,d.at(-1).age);let h=a.g+ticks(d,a);
   h+=poly(d,a,"afterTax","--s2",4)+poly(d,a,"baseAfterTax","--s3",2.5);
