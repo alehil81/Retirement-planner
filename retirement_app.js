@@ -61,7 +61,7 @@ $("startDate").value=s.startDate;
 $("startDate").addEventListener("change",e=>{s.startDate=e.target.value||GENERIC.startDate;savePlan();render()});
 function setSSClaim(who,age){
  age=Math.round(Number(age));
- if(!Number.isFinite(age)||age<62||age>72){showWarning("Social Security claim age must be a whole number from 62 through 72.");return false}
+ if(!Number.isFinite(age)||age<62||age>70){showWarning("Social Security claim age must be a whole number from 62 through 70.");return false}
  if(who==="user")s.userClaim=age;else s.spouseClaim=age;
  savePlan();render();return true;
 }
@@ -69,9 +69,9 @@ $("userSS").querySelectorAll("button").forEach(b=>b.onclick=()=>setSSClaim("user
 $("spouseSS").querySelectorAll("button").forEach(b=>b.onclick=()=>setSSClaim("spouse",+b.dataset.age));
 function bindSSCustom(id,who){
  const el=$(id);
- el.addEventListener("focus",()=>{const a=who==="user"?s.userClaim:s.spouseClaim;el.value=(a===62||a===72)?"":String(a)});
- el.addEventListener("input",()=>{const t=el.value.trim();if(t==="")return;const n=Number(t);if(Number.isInteger(n)&&n>=62&&n<=72){if(who==="user")s.userClaim=n;else s.spouseClaim=n;render()}});
- el.addEventListener("blur",()=>{const t=el.value.trim();if(t===""){render();return}const n=Number(t);if(!Number.isInteger(n)||n<62||n>72){showWarning("Social Security claim age must be a whole number from 62 through 72.");render();return}if(who==="user")s.userClaim=n;else s.spouseClaim=n;savePlan();render()});
+ el.addEventListener("focus",()=>{const a=who==="user"?s.userClaim:s.spouseClaim;el.value=(a===62||a===70)?"":String(a)});
+ el.addEventListener("input",()=>{const t=el.value.trim();if(t==="")return;const n=Number(t);if(Number.isInteger(n)&&n>=62&&n<=70){if(who==="user")s.userClaim=n;else s.spouseClaim=n;render()}});
+ el.addEventListener("blur",()=>{const t=el.value.trim();if(t===""){render();return}const n=Number(t);if(!Number.isInteger(n)||n<62||n>70){showWarning("Social Security claim age must be a whole number from 62 through 70.");render();return}if(who==="user")s.userClaim=n;else s.spouseClaim=n;savePlan();render()});
  el.addEventListener("keydown",e=>{if(e.key==="Enter")el.blur()});
 }
 bindSSCustom("userClaimCustom","user");
@@ -85,7 +85,7 @@ $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringi
 $("printPlan").onclick=()=>window.print();
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:12,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:14,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -120,7 +120,7 @@ function fers(){
  return{svc,m,unreducedAnnual,survivorReduction,survivorAnnual,annual};
 }
 function ssMonthly(a){
- a=Math.max(62,Math.min(72,Math.round(Number(a)||62)));
+ a=Math.max(62,Math.min(70,Math.round(Number(a)||62)));
  if(a===62)return 2969;
  if(a>=70)return 5181;
  // Anchor the existing 2026 benchmark values at 62, FRA 67, and 70.
@@ -223,8 +223,8 @@ function render(){
  $("service").textContent=f.svc.toFixed(1)+" years";$("fers").textContent=money(f.annual)+"/yr · "+money(f.annual/12)+"/mo";$("fersTop").textContent=money(f.annual/12)+"/mo";
  $("userSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.userClaim));
  $("spouseSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.spouseClaim));
- $("userClaimCustom").value=(s.userClaim===62||s.userClaim===72)?"":String(s.userClaim);
- $("spouseClaimCustom").value=(s.spouseClaim===62||s.spouseClaim===72)?"":String(s.spouseClaim);
+ $("userClaimCustom").value=(s.userClaim===62||s.userClaim===70)?"":String(s.userClaim);
+ $("spouseClaimCustom").value=(s.spouseClaim===62||s.spouseClaim===70)?"":String(s.spouseClaim);
  $("fersSurvivor").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.fersSurvivor==="on")===!!s.fersFullSurvivor));
  $("userBenefit").textContent="Claim "+s.userClaim+" · "+money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
  $("spouseBenefit").textContent="Claim "+s.spouseClaim+" · "+money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";

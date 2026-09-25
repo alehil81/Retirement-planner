@@ -1,4 +1,4 @@
-Retirement Planner v12
+Retirement Planner v14 — Social Security custom range cleanup
 
 Replace only:
 - index.html
@@ -7,17 +7,10 @@ Replace only:
 
 Keep styles-v4.css unchanged.
 
-Changes only:
-1. Fixes the top "Portfolio at age 95" card so it represents the balance upon
-   reaching age 95, matching the age-95 milestone.
-2. Fixes printing so the inactive 3.5% Fixed withdrawal rate does not appear
-   when Need-based mode is selected.
-3. Social Security claim age can be any whole age from 62 through 72 for each person.
-   - Quick buttons: 62 and 72.
-   - Blank custom field: type any whole age 62–72.
-   - Existing saved age 70 appears in the custom field automatically.
-   - Benefits stop increasing at age 70 under current law; ages 71 and 72 use
-     the age-70 monthly benchmark but start later.
+Change only:
+- Custom Social Security claim age is now restricted to whole ages 62–70.
+- Labels, placeholder text, and validation messages now all say 62–70.
+- Quick buttons remain Age 62 and Age 70.
+- The note now simply states that delayed-retirement credits stop at age 70.
 
-This update does NOT add the Social Security earnings test for work before FRA.
-Everything else is unchanged from v11.
+Everything else is unchanged from v13.
