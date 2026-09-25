@@ -59,8 +59,23 @@ function syncDividendControls(){
 bindInputs();
 $("startDate").value=s.startDate;
 $("startDate").addEventListener("change",e=>{s.startDate=e.target.value||GENERIC.startDate;savePlan();render()});
-$("userSS").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.userClaim=+b.dataset.age;savePlan();render()});
-$("spouseSS").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.spouseClaim=+b.dataset.age;savePlan();render()});
+function setSSClaim(who,age){
+ age=Math.round(Number(age));
+ if(!Number.isFinite(age)||age<62||age>72){showWarning("Social Security claim age must be a whole number from 62 through 72.");return false}
+ if(who==="user")s.userClaim=age;else s.spouseClaim=age;
+ savePlan();render();return true;
+}
+$("userSS").querySelectorAll("button").forEach(b=>b.onclick=()=>setSSClaim("user",+b.dataset.age));
+$("spouseSS").querySelectorAll("button").forEach(b=>b.onclick=()=>setSSClaim("spouse",+b.dataset.age));
+function bindSSCustom(id,who){
+ const el=$(id);
+ el.addEventListener("focus",()=>{const a=who==="user"?s.userClaim:s.spouseClaim;el.value=(a===62||a===72)?"":String(a)});
+ el.addEventListener("input",()=>{const t=el.value.trim();if(t==="")return;const n=Number(t);if(Number.isInteger(n)&&n>=62&&n<=72){if(who==="user")s.userClaim=n;else s.spouseClaim=n;render()}});
+ el.addEventListener("blur",()=>{const t=el.value.trim();if(t===""){render();return}const n=Number(t);if(!Number.isInteger(n)||n<62||n>72){showWarning("Social Security claim age must be a whole number from 62 through 72.");render();return}if(who==="user")s.userClaim=n;else s.spouseClaim=n;savePlan();render()});
+ el.addEventListener("keydown",e=>{if(e.key==="Enter")el.blur()});
+}
+bindSSCustom("userClaimCustom","user");
+bindSSCustom("spouseClaimCustom","spouse");
 $("mode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.mode=b.dataset.mode;savePlan();render()});
 $("fersSurvivor").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.fersFullSurvivor=b.dataset.fersSurvivor==="on";savePlan();render()});
 $("divUseMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.useVooDividends=b.dataset.divUse==="on";savePlan();syncDividendControls();render()});
@@ -70,7 +85,7 @@ $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringi
 $("printPlan").onclick=()=>window.print();
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:11,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:12,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -104,7 +119,22 @@ function fers(){
  const survivorReduction=s.fersFullSurvivor?.10:0,annual=unreducedAnnual*(1-survivorReduction),survivorAnnual=unreducedAnnual*.50;
  return{svc,m,unreducedAnnual,survivorReduction,survivorAnnual,annual};
 }
-const ssAnnual=a=>a===62?35628:62172;
+function ssMonthly(a){
+ a=Math.max(62,Math.min(72,Math.round(Number(a)||62)));
+ if(a===62)return 2969;
+ if(a>=70)return 5181;
+ // Anchor the existing 2026 benchmark values at 62, FRA 67, and 70.
+ // Intermediate ages follow the statutory early/delayed claim percentage curve.
+ if(a<=67){
+  let factor;
+  if(a<=64)factor=.70+(a-62)*.05;
+  else factor=.80+(a-64)*(1/15);
+  return Math.round(2969+((factor-.70)/.30)*(4152-2969));
+ }
+ const factor=1+(a-67)*.08;
+ return Math.round(4152+((factor-1)/.24)*(5181-4152));
+}
+const ssAnnual=a=>ssMonthly(a)*12;
 function taxesFor(totalDiv,fersIncome,ss,moonlight,wd){
  const ord=s.ordinaryTaxPct/100,divTax=s.dividendTaxPct/100;
  return totalDiv*divTax+(fersIncome+moonlight+ss*.85+wd)*ord;
@@ -175,7 +205,7 @@ function calc(){
 
 function render(){
  const c=calc();if(!c){showWarning("Retirement age must be greater than your current age.");return}
- const p=c.p,f=c.f,b=c.both,age95=c.ret.rows.at(-1);
+ const p=c.p,f=c.f,b=c.both,age95=c.ret.rows.find(x=>x.age>=94)||c.ret.rows.at(-1);
  $("combined").textContent=money(p.t);$("nominal").textContent=money(p.t*Math.pow(1+s.inflationPct/100,p.years))+" nominal equivalent";
  $("vooOut").textContent=money(p.v);$("vooSub").textContent="Growth "+money(p.vg)+" · contributions "+money(p.vc);
  $("kOut").textContent=money(p.k);$("kSub").textContent="Growth "+money(p.kg)+" · contributions "+money(p.kc);
@@ -193,9 +223,11 @@ function render(){
  $("service").textContent=f.svc.toFixed(1)+" years";$("fers").textContent=money(f.annual)+"/yr · "+money(f.annual/12)+"/mo";$("fersTop").textContent=money(f.annual/12)+"/mo";
  $("userSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.userClaim));
  $("spouseSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.spouseClaim));
+ $("userClaimCustom").value=(s.userClaim===62||s.userClaim===72)?"":String(s.userClaim);
+ $("spouseClaimCustom").value=(s.spouseClaim===62||s.spouseClaim===72)?"":String(s.spouseClaim);
  $("fersSurvivor").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.fersSurvivor==="on")===!!s.fersFullSurvivor));
- $("userBenefit").textContent=money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
- $("spouseBenefit").textContent=money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";
+ $("userBenefit").textContent="Claim "+s.userClaim+" · "+money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
+ $("spouseBenefit").textContent="Claim "+s.spouseClaim+" · "+money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";
  $("mode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset.mode===s.mode));$("fixedWrap").style.display=s.mode==="fixed"?"block":"none";
 
  $("income").textContent=money(b.afterTax)+"/yr";$("incomeMo").textContent=`Age ${b.age} · ${money(b.afterTax/12)}/mo after estimated tax`;$("expenseOut").textContent=money(s.expenses)+"/yr";
