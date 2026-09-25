@@ -17,7 +17,7 @@
 <div class="app">
 <section class="panel">
  <div class="top">
-  <div><h1>Retirement Planner</h1><div class="sub">VOO + 401(k) + VA/FERS + Social Security · deterministic real-dollar planning</div><div id="saved" class="saved" style="margin-top:5px">Saved locally</div></div>
+  <div><h1>Retirement Planner</h1><div class="sub">VOO + 401(k) + Roth IRA + VA/FERS + Social Security · deterministic real-dollar planning</div><div id="saved" class="saved" style="margin-top:5px">Saved locally</div></div>
   <div class="actions"><button id="saveDefaults" class="btn" type="button">Save current as my defaults</button><button id="reset" class="btn" type="button">Reset</button></div>
  </div>
  <div id="warning" class="warning"></div>
@@ -44,6 +44,8 @@
    <div class="field"><label>Real return</label><div class="inputwrap"><input data-key="realReturnPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>VOO balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="vooBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>401(k) balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k401Balance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Roth IRA balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothContribution" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Phase 1 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Phase 1 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Annual VOO contribution increase (nominal)</label><div class="inputwrap"><input data-key="vooIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
@@ -121,7 +123,7 @@
 <details class="panel" style="margin-top:14px">
  <summary><span>Assumptions & methodology</span><span class="muted">Details</span></summary>
  <div class="muted" style="padding-top:8px">
-  <p>Accumulation and retirement projections are deterministic, not Monte Carlo. The selected real return is applied every year, so sequence-of-returns risk is not modeled.</p>
+  <p>Accumulation and retirement projections are deterministic, not Monte Carlo. The selected real return is applied every year, so sequence-of-returns risk is not modeled. Roth IRA contributions are entered in today's dollars through retirement; the Roth IRA is then left invested with no retirement withdrawals in this model.</p>
   <p>Contribution escalation is applied separately to VOO and 401(k). Each phase begins at its entered base contribution and escalates annually thereafter.</p>
   <p>During retirement, the selected percentage of VOO dividends is available for spending and the remainder is reinvested. Because the real-return assumption is a total return, VOO ending balance is modeled as beginning balance × (1 + real total return) minus only the dividends actually used for spending. All dividends remain taxable whether used or reinvested. 401(k) ending balance is beginning balance × (1 + real return) minus withdrawals.</p>
   <p>Need-based 401(k) withdrawals are calculated to fill the estimated after-tax spending gap, subject to the available 401(k) balance. Optional moonlighting income is included through the selected age and reduces the required 401(k) draw during those years.</p>
@@ -131,6 +133,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=9"></script>
+<script src="retirement_app.js?v=10"></script>
 </body>
 </html>

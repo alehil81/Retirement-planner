@@ -3,14 +3,14 @@ const PLAN_KEY="retirement-planner-standalone-v1";
 const DEFAULT_KEY="retirement-planner-personal-defaults-v2";
 const GENERIC={
  currentAge:45,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
- vooBalance:500000,k401Balance:500000,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:55,voo2:30000,k2:30000,
+ vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:55,voo2:30000,k2:30000,
  high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,ordinaryTaxPct:20,dividendTaxPct:15,
  moonlightIncome:0,moonlightThroughAge:70,
  fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",startDate:"2018-12-01"
 };
 const LIMITS={
  currentAge:[18,90],spouseAge:[18,100],retirementAge:[19,100],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
- vooBalance:[0,1e11],k401Balance:[0,1e11],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
+ vooBalance:[0,1e11],k401Balance:[0,1e11],rothBalance:[0,1e11],rothContribution:[0,1e9],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
  voo2:[0,1e9],k2:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],
  moonlightIncome:[0,1e8],moonlightThroughAge:[18,100],fixedPct:[0,20]
 };
@@ -69,7 +69,7 @@ $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{chartMode=b.datas
 $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringify(s));savePlan();$("saved").textContent="Saved as your local defaults"}catch(e){showWarning("Could not save local defaults in this browser.")}};
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:9,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:10,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -88,14 +88,14 @@ function contribAt(age,kind){
 }
 function project(rate=s.realReturnPct){
  const years=Math.max(0,Math.round(s.retirementAge-s.currentAge));
- let v=s.vooBalance,k=s.k401Balance,a=s.currentAge,vc=0,kc=0;
- const rows=[{age:a,v,k,t:v+k,vcum:0,kcum:0}];
+ let v=s.vooBalance,k=s.k401Balance,roth=s.rothBalance,a=s.currentAge,vc=0,kc=0,rc=0;
+ const rows=[{age:a,v,k,roth,t:v+k+roth,vcum:0,kcum:0,rcum:0}];
  for(let i=0;i<years;i++){
-  const cv=contribAt(a,"voo"),ck=contribAt(a,"k");
-  v=v*(1+rate/100)+cv;k=k*(1+rate/100)+ck;vc+=cv;kc+=ck;a++;
-  rows.push({age:a,v,k,t:v+k,vcum:vc,kcum:kc});
+  const cv=contribAt(a,"voo"),ck=contribAt(a,"k"),cr=Math.max(0,s.rothContribution);
+  v=v*(1+rate/100)+cv;k=k*(1+rate/100)+ck;roth=roth*(1+rate/100)+cr;vc+=cv;kc+=ck;rc+=cr;a++;
+  rows.push({age:a,v,k,roth,t:v+k+roth,vcum:vc,kcum:kc,rcum:rc});
  }
- return{years,v,k,t:v+k,rows,vc,kc,vg:v-s.vooBalance-vc,kg:k-s.k401Balance-kc};
+ return{years,v,k,roth,t:v+k+roth,rows,vc,kc,rc,vg:v-s.vooBalance-vc,kg:k-s.k401Balance-kc,rg:roth-s.rothBalance-rc};
 }
 function fers(){
  const start=new Date((s.startDate||GENERIC.startDate)+"T00:00:00Z"),now=new Date(),yrs=s.retirementAge-s.currentAge,end=new Date(now.getTime()+yrs*365.2425*86400000);
@@ -110,7 +110,7 @@ function taxesFor(totalDiv,fersIncome,ss,moonlight,wd){
 }
 function retirement(p,f){
  const r=s.realReturnPct/100,start=Math.ceil(s.retirementAge);
- let voo=p.v,k=p.k;const rows=[];
+ let voo=p.v,k=p.k,roth=p.roth;const rows=[];
  for(let age=start;age<=95;age++){
   const spa=s.spouseAge+(age-s.currentAge);
   const u=age>=s.userClaim?ssAnnual(s.userClaim):0;
@@ -137,14 +137,14 @@ function retirement(p,f){
   const afterTax=cashGross-taxes,surplus=afterTax-s.expenses;
 
   // Real return is a total return. Only the dividend portion actually spent leaves VOO.
-  const endV=Math.max(0,voo*(1+r)-divUsed),endK=Math.max(0,availableK-wd);
+  const endV=Math.max(0,voo*(1+r)-divUsed),endK=Math.max(0,availableK-wd),endRoth=Math.max(0,roth*(1+r));
 
   rows.push({
    age,spa,vooStart:voo,kStart:k,div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,wd,
    gross:taxableGross,cashGross,taxes,afterTax,expenses:s.expenses,surplus,baseAfterTax:afterTaxBase,
-   endV,endK,endTotal:endV+endK,required
+   rothStart:roth,endV,endK,endRoth,endTotal:endV+endK+endRoth,required
   });
-  voo=endV;k=endK;
+  voo=endV;k=endK;roth=endRoth;
  }
  return{rows};
 }
@@ -178,7 +178,7 @@ function render(){
  $("combined").textContent=money(p.t);$("nominal").textContent=money(p.t*Math.pow(1+s.inflationPct/100,p.years))+" nominal equivalent";
  $("vooOut").textContent=money(p.v);$("vooSub").textContent="Growth "+money(p.vg)+" · contributions "+money(p.vc);
  $("kOut").textContent=money(p.k);$("kSub").textContent="Growth "+money(p.kg)+" · contributions "+money(p.kc);
- $("age95Out").textContent=money(age95.endTotal);$("age95Sub").textContent="VOO "+money(age95.endV)+" · 401(k) "+money(age95.endK);
+ $("age95Out").textContent=money(age95.endTotal);$("age95Sub").textContent="VOO "+money(age95.endV)+" · 401(k) "+money(age95.endK)+" · Roth "+money(age95.endRoth);
  $("targetOut").textContent=c.target?"Age "+Math.round(c.target):"Not reached";
 
  const growthNote=$("contributionGrowthNote");
@@ -210,7 +210,7 @@ function render(){
  $("withdrawal").textContent=money(b.wd)+"/yr";$("withdrawalSub").textContent=money(b.wd/12)+"/mo gross · "+(b.kStart?b.wd/b.kStart*100:0).toFixed(2)+"% of that year’s starting 401(k)";
  $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross modeled income (includes reinvested dividends)";
 
- const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)}</div></div>`}).join("");
+ const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)} · Roth ${compact(z.endRoth)}</div></div>`}).join("");
 
  const stagesEl=$("incomeStages");
  if(stagesEl){stagesEl.innerHTML=c.stages.map(st=>{

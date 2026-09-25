@@ -1,4 +1,4 @@
-Retirement Planner v9 — FERS full survivor election toggle
+Retirement Planner v10 — Roth IRA inputs
 
 Replace only:
 - index.html
@@ -7,11 +7,15 @@ Replace only:
 
 Keep styles-v4.css unchanged.
 
-New feature only:
-- Full FERS survivor election toggle in the VA/FERS section.
-- ON reduces the retiree FERS annuity by 10%.
-- The corresponding spouse survivor annuity is 50% of the unreduced annuity.
-- OFF preserves the prior unreduced pension calculation.
-- Existing saved plans default this new toggle to OFF, so all current results remain unchanged until you turn it on.
+Only new feature:
+- Roth IRA current balance
+- Roth IRA annual contribution (today's dollars)
 
-Everything else is unchanged from v8.
+Model behavior:
+- Roth contributions continue through retirement at the entered real/today's-dollar amount.
+- Roth IRA uses the same selected real return as the other investment accounts.
+- No Roth withdrawals are modeled during retirement; it remains invested.
+- Roth is included in combined portfolio totals, target attainment, retirement milestones, and age-95 portfolio value.
+- Existing saved plans default Roth balance and contribution to $0, preserving all prior results until values are entered.
+
+Everything else is unchanged from v9.
