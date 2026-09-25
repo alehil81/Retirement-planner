@@ -12,13 +12,30 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="styles-v4.css?v=7">
 <title>Retirement Planner</title>
+
+<style id="printStyles">
+@media print{
+  @page{size:auto;margin:0.45in}
+  html,body{background:#fff!important;color:#000!important;width:auto!important;max-width:none!important;overflow:visible!important}
+  body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .app{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;overflow:visible!important}
+  .panel,.soft,.milestone{break-inside:avoid;page-break-inside:avoid}
+  .twocol,.fields,.kpis,.milestones{break-inside:auto;page-break-inside:auto}
+  .chartscroll{overflow:visible!important}
+  #chart,.chartscroll svg{max-width:100%!important;width:100%!important;height:auto!important}
+  .actions,#saved,.warning,#importFile,.tabs{display:none!important}
+  details{display:block!important}
+  details>summary{display:flex!important}
+  details>*:not(summary){display:block!important}
+}
+</style>
 </head>
 <body>
 <div class="app">
 <section class="panel">
  <div class="top">
   <div><h1>Retirement Planner</h1><div class="sub">VOO + 401(k) + Roth IRA + VA/FERS + Social Security · deterministic real-dollar planning</div><div id="saved" class="saved" style="margin-top:5px">Saved locally</div></div>
-  <div class="actions"><button id="saveDefaults" class="btn" type="button">Save current as my defaults</button><button id="reset" class="btn" type="button">Reset</button></div>
+  <div class="actions"><button id="saveDefaults" class="btn" type="button">Save current as my defaults</button><button id="printPlan" class="btn" type="button">Print / Save PDF</button><button id="reset" class="btn" type="button">Reset</button></div>
  </div>
  <div id="warning" class="warning"></div>
 </section>
@@ -82,7 +99,7 @@
    <div class="field"><label>VOO dividend yield</label><div class="inputwrap"><input data-key="divYield" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Use VOO dividends for spending</label><div class="seg" id="divUseMode"><button type="button" data-div-use="on"><strong>On</strong><span>Use selected %</span></button><button type="button" data-div-use="off"><strong>Off</strong><span>Reinvest all</span></button></div></div>
    <div class="field" id="divPctField"><label>VOO dividends used for spending</label><div class="inputwrap"><input data-key="vooDividendUsePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
-   <div class="field"><label>Annual after-tax expenses</label><div class="inputwrap"><span class="prefix">$</span><input data-key="expenses" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Annual after-tax expenses (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="expenses" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Estimated effective ordinary tax rate</label><div class="inputwrap"><input data-key="ordinaryTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Qualified dividend tax rate</label><div class="inputwrap"><input data-key="dividendTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Annual moonlighting income</label><div class="inputwrap"><span class="prefix">$</span><input data-key="moonlightIncome" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
@@ -133,6 +150,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=10"></script>
+<script src="retirement_app.js?v=11"></script>
 </body>
 </html>
