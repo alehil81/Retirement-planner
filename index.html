@@ -87,17 +87,26 @@
    <div class="field"><label>Real return</label><div class="inputwrap"><input data-key="realReturnPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>VOO balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="vooBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>401(k) balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k401Balance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Roth IRA balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothContribution" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Roth IRA balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div><div></div>
+
    <div class="field"><label>Phase 1 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Phase 1 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Phase 1 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothContribution" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div><div></div>
+
    <div class="field"><label>Annual VOO contribution increase (nominal)</label><div class="inputwrap"><input data-key="vooIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Annual 401(k) contribution increase (nominal)</label><div class="inputwrap"><input data-key="kIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
-   <div class="field"><label>Phase 2 starts at age</label><input data-key="changeAge" type="text" inputmode="decimal"></div><div></div>
+
+   <div class="field"><label>Phase 2 starts at age</label><input data-key="changeAge" type="text" inputmode="numeric"></div><div></div>
    <div class="field"><label>Phase 2 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Phase 2 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Phase 2 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="roth2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div><div></div>
+
+   <div class="field"><label>Phase 3 starts at age</label><input data-key="changeAge3" type="text" inputmode="numeric"></div><div></div>
+   <div class="field"><label>Phase 3 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo3" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Phase 3 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k3" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Phase 3 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="roth3" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div><div></div>
   </div>
-  <div class="tiny" style="padding-bottom:12px">Contribution dollar inputs are in today's dollars. Increase rates are nominal; the app converts them to real growth using inflation before compounding within each phase. <span id="contributionGrowthNote"></span> Phase 2 restarts from the entered Phase 2 base amount.</div>
+  <div class="tiny" style="padding-bottom:12px">Contribution dollar inputs are in today's dollars. Phase 2 and Phase 3 start ages are editable. VOO and 401(k) increase rates are nominal; the app converts them to real growth using inflation before compounding within each phase. Roth IRA phase amounts are treated as constant real (today's-dollar) contributions within each phase. <span id="contributionGrowthNote"></span> Each new phase restarts from its entered base amount.</div>
  </details>
 
  <details>
@@ -207,6 +216,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=20"></script>
+<script src="retirement_app.js?v=21"></script>
 </body>
 </html>

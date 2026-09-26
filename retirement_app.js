@@ -3,15 +3,15 @@ const PLAN_KEY="retirement-planner-standalone-v1";
 const DEFAULT_KEY="retirement-planner-personal-defaults-v2";
 const GENERIC={
  currentAge:45,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
- vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:55,voo2:30000,k2:30000,
+ vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,roth2:0,roth3:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:50,voo2:30000,k2:30000,changeAge3:60,voo3:30000,k3:30000,
  high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,stepDownSpending:false,expenses80:300000,expenses90:275000,ordinaryTaxPct:20,dividendTaxPct:15,
  moonlightIncome:0,moonlightThroughAge:70,
  fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",monteCarlo:false,startDate:"2018-12-01"
 };
 const LIMITS={
  currentAge:[18,90],spouseAge:[18,100],retirementAge:[19,100],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
- vooBalance:[0,1e11],k401Balance:[0,1e11],rothBalance:[0,1e11],rothContribution:[0,1e9],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
- voo2:[0,1e9],k2:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],expenses80:[0,1e8],expenses90:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],
+ vooBalance:[0,1e11],k401Balance:[0,1e11],rothBalance:[0,1e11],rothContribution:[0,1e9],roth2:[0,1e9],roth3:[0,1e9],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
+ voo2:[0,1e9],k2:[0,1e9],changeAge3:[18,100],voo3:[0,1e9],k3:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],expenses80:[0,1e8],expenses90:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],
  moonlightIncome:[0,1e8],moonlightThroughAge:[18,100],fixedPct:[0,20]
 };
 const $=id=>document.getElementById(id);
@@ -21,15 +21,54 @@ const compact=n=>Math.abs(n)>=1e9?"$"+(n/1e9).toFixed(1)+"B":Math.abs(n)>=1e6?"$
 const parseNum=v=>{const n=Number(String(v).replaceAll(",","").trim());return Number.isFinite(n)?n:null};
 let s=loadInitial(),chartMode="accumulation";
 
+function migratePlan(raw){
+ const p={...GENERIC,...(raw||{})};
+
+ // Preserve the old single Roth contribution as all three phase amounts
+ // unless the newer phase-specific values already exist.
+ if(raw){
+  if(raw.roth2==null)p.roth2=Math.max(0,Number(raw.rothContribution??p.rothContribution)||0);
+  if(raw.roth3==null)p.roth3=Math.max(0,Number(raw.rothContribution??p.rothContribution)||0);
+
+  // New Phase 3 defaults to age 60. For an older saved 2-phase plan,
+  // derive the new Phase 3 VOO/401(k) base from what the old schedule
+  // would have contributed at age 60. This keeps old projections nearly
+  // unchanged until the user edits the new Phase 3 values.
+  if(raw.changeAge3==null)p.changeAge3=60;
+
+  const oldPhase2Age=Number(raw.changeAge??p.changeAge);
+  const phase3Age=Number(p.changeAge3);
+  const inflation=Number(raw.inflationPct??p.inflationPct)/100;
+
+  const derive=(base,nominalPct)=>{
+   const b=Math.max(0,Number(base)||0);
+   const nominal=Number(nominalPct||0)/100;
+   const realInc=(1+nominal)/(1+inflation)-1;
+   const n=Math.max(0,Math.floor(phase3Age-oldPhase2Age));
+   return Math.max(0,b*Math.pow(1+realInc,n));
+  };
+
+  if(raw.voo3==null)p.voo3=derive(raw.voo2??p.voo2,raw.vooIncreasePct??p.vooIncreasePct);
+  if(raw.k3==null)p.k3=derive(raw.k2??p.k2,raw.kIncreasePct??p.kIncreasePct);
+ }
+ return p;
+}
 function loadInitial(){
- try{const old=localStorage.getItem(PLAN_KEY);if(old)return {...GENERIC,...JSON.parse(old)}}catch(e){}
- try{const d=localStorage.getItem(DEFAULT_KEY);if(d)return {...GENERIC,...JSON.parse(d)}}catch(e){}
- return {...GENERIC};
+ try{const old=localStorage.getItem(PLAN_KEY);if(old)return migratePlan(JSON.parse(old))}catch(e){}
+ try{const d=localStorage.getItem(DEFAULT_KEY);if(d)return migratePlan(JSON.parse(d))}catch(e){}
+ return migratePlan(null);
 }
 function savePlan(){try{localStorage.setItem(PLAN_KEY,JSON.stringify(s));$("saved").textContent="Saved locally"}catch(e){$("saved").textContent="Local save unavailable"}}
 function showWarning(msg){const el=$("warning");if(!el)return;el.textContent=msg;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),4000)}
 function showInput(el){const k=el.dataset.key;el.value=el.dataset.money?commas(s[k]):String(s[k])}
-function valid(k,n){const l=LIMITS[k];return !l||(n>=l[0]&&n<=l[1])}
+function valid(k,n){
+ const l=LIMITS[k];
+ if(l&&!(n>=l[0]&&n<=l[1]))return false;
+ if((k==="changeAge"||k==="changeAge3")&&!Number.isInteger(n))return false;
+ if(k==="changeAge"&&Number.isFinite(s.changeAge3)&&n>=s.changeAge3)return false;
+ if(k==="changeAge3"&&Number.isFinite(s.changeAge)&&n<=s.changeAge)return false;
+ return true;
+}
 
 function bindInputs(){
  document.querySelectorAll("[data-key]").forEach(el=>{
@@ -38,7 +77,11 @@ function bindInputs(){
   el.addEventListener("input",()=>{if(el.value.trim()==="")return;const n=parseNum(el.value);if(n!==null){s[el.dataset.key]=n;render()}});
   el.addEventListener("blur",()=>{
    const k=el.dataset.key,n=parseNum(el.value),prev=Number(el.dataset.prev);
-   if(n===null||!valid(k,n)){s[k]=Number.isFinite(prev)?prev:GENERIC[k];showWarning("That value is outside the allowed range, so the previous value was restored.")}
+   if(n===null||!valid(k,n)){
+    s[k]=Number.isFinite(prev)?prev:GENERIC[k];
+    if(k==="changeAge"||k==="changeAge3")showWarning("Phase start ages must be whole numbers, and Phase 3 must start after Phase 2. The previous value was restored.");
+    else showWarning("That value is outside the allowed range, so the previous value was restored.");
+   }
    else{s[k]=n;savePlan()}
    showInput(el);render();
   });
@@ -106,7 +149,7 @@ $("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.ste
 $("monteCarloMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.monteCarlo=b.dataset.mc==="on";savePlan();render()});
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:20,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:21,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -116,11 +159,21 @@ function realContributionIncrease(nominalPct){
  return (1+nominal)/(1+inflation)-1;
 }
 function contribAt(age,kind){
- const phase1=age<s.changeAge;
- const base=kind==="voo"?(phase1?s.voo1:s.voo2):(phase1?s.k1:s.k2);
+ let phase,startAge,base;
+ if(age<s.changeAge){phase=1;startAge=s.currentAge}
+ else if(age<s.changeAge3){phase=2;startAge=s.changeAge}
+ else{phase=3;startAge=s.changeAge3}
+
+ if(kind==="voo")base=phase===1?s.voo1:phase===2?s.voo2:s.voo3;
+ else if(kind==="k")base=phase===1?s.k1:phase===2?s.k2:s.k3;
+ else base=phase===1?s.rothContribution:phase===2?s.roth2:s.roth3;
+
+ // Roth phase inputs are already constant today's-dollar amounts.
+ if(kind==="roth")return Math.max(0,base);
+
  const nominalPct=kind==="voo"?s.vooIncreasePct:s.kIncreasePct;
  const inc=realContributionIncrease(nominalPct);
- const n=phase1?Math.max(0,Math.floor(age-s.currentAge)):Math.max(0,Math.floor(age-s.changeAge));
+ const n=Math.max(0,Math.floor(age-startAge));
  return Math.max(0,base*Math.pow(1+inc,n));
 }
 function project(rate=s.realReturnPct){
@@ -128,7 +181,7 @@ function project(rate=s.realReturnPct){
  let v=s.vooBalance,k=s.k401Balance,roth=s.rothBalance,a=s.currentAge,vc=0,kc=0,rc=0;
  const rows=[{age:a,v,k,roth,t:v+k+roth,vcum:0,kcum:0,rcum:0}];
  for(let i=0;i<years;i++){
-  const cv=contribAt(a,"voo"),ck=contribAt(a,"k"),cr=Math.max(0,s.rothContribution);
+  const cv=contribAt(a,"voo"),ck=contribAt(a,"k"),cr=contribAt(a,"roth");
   v=v*(1+rate/100)+cv;k=k*(1+rate/100)+ck;roth=roth*(1+rate/100)+cr;vc+=cv;kc+=ck;rc+=cr;a++;
   rows.push({age:a,v,k,roth,t:v+k+roth,vcum:vc,kcum:kc,rcum:rc});
  }
@@ -181,7 +234,7 @@ function projectWithReturns(returns){
  const rows=[{age:a,v,k,roth,t:v+k+roth,vcum:0,kcum:0,rcum:0}];
  for(let i=0;i<years;i++){
   const r=returns[i]??s.realReturnPct/100;
-  const cv=contribAt(a,"voo"),ck=contribAt(a,"k"),cr=Math.max(0,s.rothContribution);
+  const cv=contribAt(a,"voo"),ck=contribAt(a,"k"),cr=contribAt(a,"roth");
   v=Math.max(0,v*(1+r)+cv);k=Math.max(0,k*(1+r)+ck);roth=Math.max(0,roth*(1+r)+cr);vc+=cv;kc+=ck;rc+=cr;a++;
   rows.push({age:a,v,k,roth,t:v+k+roth,vcum:vc,kcum:kc,rcum:rc});
  }
@@ -294,7 +347,7 @@ function render(){
  const growthNote=$("contributionGrowthNote");
  if(growthNote){
   const vr=realContributionIncrease(s.vooIncreasePct)*100,kr=realContributionIncrease(s.kIncreasePct)*100;
-  growthNote.textContent=`Current real contribution growth: VOO ${vr.toFixed(2)}%/yr · 401(k) ${kr.toFixed(2)}%/yr.`;
+  growthNote.textContent=`Current real contribution growth within each VOO/401(k) phase: VOO ${vr.toFixed(2)}%/yr · 401(k) ${kr.toFixed(2)}%/yr.`;
  }
 
  syncDividendControls();
