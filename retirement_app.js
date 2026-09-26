@@ -85,7 +85,7 @@ $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringi
 $("printPlan").onclick=()=>window.print();
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:15,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:16,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -270,7 +270,7 @@ function render(){
  $("preDetail").textContent=`After-tax cash from ${divPhrase} + FERS + Social Security${b.moonlight>0?" + moonlighting":""}, before 401(k); tax includes all VOO dividends`;
 
  const cov=s.expenses?b.baseAfterTax/s.expenses*100:100;$("coverage").style.width=Math.min(100,Math.max(0,cov))+"%";$("coverageText").textContent=cov.toFixed(1)+"% of after-tax expenses covered before 401(k)";
- $("withdrawal").textContent=money(b.wd)+"/yr";$("withdrawalSub").textContent=money(b.wd/12)+"/mo gross · "+(b.kStart?b.wd/b.kStart*100:0).toFixed(2)+"% of that year’s starting 401(k)"+(b.rmd>0?" · RMD minimum "+money(b.rmd):"");
+ 
  $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross modeled income (includes reinvested dividends)";
 
  const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)} · Roth ${compact(z.endRoth)}</div></div>`}).join("");
