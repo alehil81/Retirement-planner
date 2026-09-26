@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles-v4.css?v=9">
+<link rel="stylesheet" href="styles-v4.css?v=11">
 <title>Retirement Planner</title>
 
 <style id="printStyles">
@@ -183,10 +183,10 @@
 
  <details>
   <summary><span>VA / FERS pension</span><span id="fersTop" class="muted">—</span></summary>
-  <div class="fields" style="padding:8px 0 14px">
+  <div class="va-top-grid" style="padding:8px 0 14px">
    <div class="field"><label>VA start date</label><input id="startDate" type="date"></div>
    <div class="field"><label>Estimated high-3 salary</label><div class="inputwrap"><span class="prefix">$</span><input data-key="high3" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Full FERS survivor election</label><div class="seg" id="fersSurvivor"><button type="button" data-fers-survivor="on"><strong>On</strong><span>50% survivor</span></button><button type="button" data-fers-survivor="off"><strong>Off</strong><span>No reduction</span></button></div></div>
+   <div class="field va-survivor-field"><label>Full FERS survivor election</label><div class="seg" id="fersSurvivor"><button type="button" data-fers-survivor="on"><strong>On</strong><span>50% survivor</span></button><button type="button" data-fers-survivor="off"><strong>Off</strong><span>No reduction</span></button></div></div>
   </div>
   <div class="soft" style="margin-bottom:14px"><div class="row"><span class="muted">Service at retirement</span><strong id="service">—</strong></div><div class="row" style="margin-top:8px"><span class="muted">Estimated pension</span><strong id="fers">—</strong></div></div>
  </details>
@@ -294,6 +294,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=26"></script>
+<script src="retirement_app.js?v=27"></script>
 </body>
 </html>

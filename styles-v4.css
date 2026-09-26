@@ -232,3 +232,27 @@ label{line-height:1.25}
   .contribution-growth-section input[type=text]{padding-left:9px;padding-right:26px!important}
   .contribution-growth-section .suffix{right:9px}
 }
+
+
+/* v27 VA/FERS width fix */
+.va-top-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:8px}.va-top-grid .field,.va-survivor-field{min-width:0}.va-top-grid input[type=date]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none}.va-survivor-field .seg{max-width:360px}@media(max-width:560px){.va-top-grid{grid-template-columns:1fr;gap:10px}.va-survivor-field .seg{max-width:none}}
+
+
+/* v27 final — align FERS survivor election with VA/FERS field widths */
+.va-top-grid .va-survivor-field{
+  grid-column:1 / 2;
+  width:100%;
+  max-width:none;
+}
+.va-top-grid .va-survivor-field .seg{
+  width:100%;
+  max-width:none;
+}
+.va-top-grid .va-survivor-field .seg button{
+  min-width:0;
+}
+@media(max-width:560px){
+  .va-top-grid .va-survivor-field{
+    grid-column:1 / -1;
+  }
+}
