@@ -1,4 +1,4 @@
-Retirement Planner v18 — scenario presets + step-down spending
+Retirement Planner v19 — optional Monte Carlo sequence-of-returns analysis
 
 Replace only:
 - index.html
@@ -7,18 +7,15 @@ Replace only:
 
 Keep styles-v4.css unchanged.
 
-Scenario presets change ONLY real return and inflation:
-- Base: 4.5% real / 2.5% inflation
-- Conservative: 4.0% real / 3.0% inflation
-- Stress: 3.0% real / 3.5% inflation
-- Strong-return: 5.5% real / 2.5% inflation
+New feature:
+- Monte Carlo sequence-of-returns toggle in the Scenario presets section.
+- OFF: all existing deterministic outputs behave exactly as before.
+- ON: adds a separate 2,000-trial Monte Carlo risk summary without replacing the deterministic plan outputs.
+- Simulates annual real returns from the current age through age 95.
+- Uses the selected real return as the compound-return center and 16% annual real-return volatility.
+- Applies the same market return each year to VOO, 401(k), and Roth IRA.
+- Uses a fixed random seed so results remain stable between refreshes and comparable across assumption changes.
+- Reports plan success through age 95, median and 10th–90th percentile portfolio at retirement, and median / 10th / 90th percentile portfolio at age 95.
+- Success means every modeled annual after-tax spending target can be funded through age 95 using the existing 401(k) -> Roth -> VOO waterfall.
 
-Step-down spending:
-- OFF by default so existing plans remain unchanged.
-- When ON:
-  * retirement through age 79 = main annual after-tax expense input
-  * ages 80–89 = separate later-life input (default $300,000)
-  * age 90+ = separate later-life input (default $275,000)
-- All amounts are today's dollars.
-
-All v17 RMD and 401(k) -> Roth -> VOO waterfall logic remains intact.
+All v18 features remain intact: scenario presets, step-down spending, RMDs, Roth/VOO spending waterfall, Social Security options, taxes, FERS survivor election, and printing.

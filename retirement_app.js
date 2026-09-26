@@ -6,7 +6,7 @@ const GENERIC={
  vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:55,voo2:30000,k2:30000,
  high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,stepDownSpending:false,expenses80:300000,expenses90:275000,ordinaryTaxPct:20,dividendTaxPct:15,
  moonlightIncome:0,moonlightThroughAge:70,
- fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",startDate:"2018-12-01"
+ fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",monteCarlo:false,startDate:"2018-12-01"
 };
 const LIMITS={
  currentAge:[18,90],spouseAge:[18,100],retirementAge:[19,100],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
@@ -93,9 +93,10 @@ $("scenarioPresets").querySelectorAll("button").forEach(b=>b.onclick=()=>{
  const p=SCENARIOS[b.dataset.scenario];s.realReturnPct=p.realReturnPct;s.inflationPct=p.inflationPct;syncInputs();savePlan();render();
 });
 $("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.stepDownSpending=b.dataset.stepdown==="on";savePlan();render()});
+$("monteCarloMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.monteCarlo=b.dataset.mc==="on";savePlan();render()});
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:18,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:19,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -164,10 +165,23 @@ function spendingForAge(age){
  if(age>=80)return s.expenses80;
  return s.expenses;
 }
-function retirement(p,f){
- const r=s.realReturnPct/100,start=Math.ceil(s.retirementAge);
+function projectWithReturns(returns){
+ const years=Math.max(0,Math.round(s.retirementAge-s.currentAge));
+ let v=s.vooBalance,k=s.k401Balance,roth=s.rothBalance,a=s.currentAge,vc=0,kc=0,rc=0;
+ const rows=[{age:a,v,k,roth,t:v+k+roth,vcum:0,kcum:0,rcum:0}];
+ for(let i=0;i<years;i++){
+  const r=returns[i]??s.realReturnPct/100;
+  const cv=contribAt(a,"voo"),ck=contribAt(a,"k"),cr=Math.max(0,s.rothContribution);
+  v=Math.max(0,v*(1+r)+cv);k=Math.max(0,k*(1+r)+ck);roth=Math.max(0,roth*(1+r)+cr);vc+=cv;kc+=ck;rc+=cr;a++;
+  rows.push({age:a,v,k,roth,t:v+k+roth,vcum:vc,kcum:kc,rcum:rc});
+ }
+ return{years,v,k,roth,t:v+k+roth,rows,vc,kc,rc,vg:v-s.vooBalance-vc,kg:k-s.k401Balance-kc,rg:roth-s.rothBalance-rc};
+}
+function retirementWithReturns(p,f,returns){
+ const start=Math.ceil(s.retirementAge);
  let voo=p.v,k=p.k,roth=p.roth;const rows=[];
- for(let age=start;age<=95;age++){
+ for(let age=start,i=0;age<=95;age++,i++){
+  const r=returns?.[i]??s.realReturnPct/100;
   const expenseTarget=spendingForAge(age);
   const spa=s.spouseAge+(age-s.currentAge);
   const u=age>=s.userClaim?ssAnnual(s.userClaim):0;
@@ -178,62 +192,58 @@ function retirement(p,f){
   const usePct=s.useVooDividends?Math.max(0,Math.min(100,s.vooDividendUsePct))/100:0;
   const divUsed=div*usePct;
   const divReinvested=div-divUsed;
-
-  // All qualified dividends are taxable even if reinvested.
   const taxesBase=taxesFor(div,f.annual,ss,moonlight,0);
   const afterTaxBase=divUsed+f.annual+ss+moonlight-taxesBase;
   const ordNet=Math.max(.01,1-s.ordinaryTaxPct/100);
-
-  // First basket: traditional 401(k), with the RMD minimum overlaid from age 75.
   const planned401k=s.mode==="fixed"?k*s.fixedPct/100:Math.max(0,(expenseTarget-afterTaxBase)/ordNet);
   const rmd=rmdForAge(age,k);
   const target401k=Math.max(planned401k,rmd);
   const availableK=Math.max(0,k*(1+r));
   const wd401k=Math.min(target401k,availableK);
-
   const taxes=taxesFor(div,f.annual,ss,moonlight,wd401k);
   const cashAfter401k=divUsed+f.annual+ss+moonlight+wd401k-taxes;
-
-  // Reinvest only genuine after-tax forced RMD excess.
   const forcedRmdGross=rmd>planned401k?Math.max(0,wd401k-planned401k):0;
   const forcedRmdNet=forcedRmdGross*ordNet;
   const rmdReinvested=Math.max(0,Math.min(forcedRmdNet,cashAfter401k-expenseTarget));
-
   let spendable=cashAfter401k-rmdReinvested;
-
-  // Second basket: Roth IRA. Qualified distributions are modeled tax-free.
   const availableRoth=Math.max(0,roth*(1+r));
   const rothNeeded=Math.max(0,expenseTarget-spendable);
-  const rothWd=Math.min(rothNeeded,availableRoth);
-  spendable+=rothWd;
-
-  // Third basket: VOO share sales. Capital-gain tax on sales is not modeled.
+  const rothWd=Math.min(rothNeeded,availableRoth);spendable+=rothWd;
   const availableVooBeforeSale=Math.max(0,voo*(1+r)-divUsed+rmdReinvested);
   const vooSaleNeeded=Math.max(0,expenseTarget-spendable);
-  const vooSale=Math.min(vooSaleNeeded,availableVooBeforeSale);
-  spendable+=vooSale;
-
-  const afterTax=spendable;
-  const surplus=afterTax-expenseTarget;
-  const endV=Math.max(0,availableVooBeforeSale-vooSale);
-  const endK=Math.max(0,availableK-wd401k);
-  const endRoth=Math.max(0,availableRoth-rothWd);
-
-  // Roth withdrawals and VOO sale proceeds are not taxable in this simplified tax engine.
-  const cashGross=divUsed+f.annual+ss+moonlight+wd401k+rothWd+vooSale;
-  const taxableGross=div+f.annual+ss+moonlight+wd401k;
-
-  rows.push({
-   age,spa,vooStart:voo,kStart:k,rothStart:roth,
-   div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,
-   plannedWd:planned401k,rmd,wd:wd401k,wd401k,rothWd,vooSale,rmdReinvested,
-   gross:taxableGross,cashGross,taxes,afterTax,expenses:expenseTarget,surplus,
-   baseAfterTax:afterTaxBase,endV,endK,endRoth,endTotal:endV+endK+endRoth,
-   required:target401k
-  });
+  const vooSale=Math.min(vooSaleNeeded,availableVooBeforeSale);spendable+=vooSale;
+  const afterTax=spendable,surplus=afterTax-expenseTarget;
+  const endV=Math.max(0,availableVooBeforeSale-vooSale),endK=Math.max(0,availableK-wd401k),endRoth=Math.max(0,availableRoth-rothWd);
+  rows.push({age,spa,vooStart:voo,kStart:k,rothStart:roth,div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,plannedWd:planned401k,rmd,wd:wd401k,wd401k,rothWd,vooSale,rmdReinvested,gross:div+f.annual+ss+moonlight+wd401k,cashGross:divUsed+f.annual+ss+moonlight+wd401k+rothWd+vooSale,taxes,afterTax,expenses:expenseTarget,surplus,baseAfterTax:afterTaxBase,endV,endK,endRoth,endTotal:endV+endK+endRoth,required:target401k});
   voo=endV;k=endK;roth=endRoth;
  }
  return{rows};
+}
+function mulberry32(seed){return function(){let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function normal01(rng){let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function monteReturn(rng){
+ const sigma=.16;
+ const center=Math.max(-.95,s.realReturnPct/100);
+ return Math.exp(Math.log1p(center)+sigma*normal01(rng))-1;
+}
+function percentile(sorted,q){if(!sorted.length)return 0;const x=(sorted.length-1)*q,i=Math.floor(x),f=x-i;return sorted[i]+(sorted[Math.min(i+1,sorted.length-1)]-sorted[i])*f}
+function runMonteCarlo(f){
+ const trials=2000,preYears=Math.max(0,Math.round(s.retirementAge-s.currentAge)),retYears=Math.max(0,96-Math.ceil(s.retirementAge));
+ const rng=mulberry32(0x5EED1234),retireVals=[],age95Vals=[];let successes=0;
+ for(let n=0;n<trials;n++){
+  const pre=Array.from({length:preYears},()=>monteReturn(rng));
+  const post=Array.from({length:retYears},()=>monteReturn(rng));
+  const p=projectWithReturns(pre),ret=retirementWithReturns(p,f,post);
+  retireVals.push(p.t);
+  const at95=ret.rows.find(x=>x.age>=94)||ret.rows.at(-1);
+  age95Vals.push(at95?at95.endTotal:p.t);
+  if(ret.rows.every(x=>x.afterTax+1>=x.expenses))successes++;
+ }
+ retireVals.sort((a,b)=>a-b);age95Vals.sort((a,b)=>a-b);
+ return{trials,success:successes/trials,retP10:percentile(retireVals,.10),retP50:percentile(retireVals,.50),retP90:percentile(retireVals,.90),p10:percentile(age95Vals,.10),p50:percentile(age95Vals,.50),p90:percentile(age95Vals,.90)};
+}
+function retirement(p,f){
+ return retirementWithReturns(p,f,null);
 }
 function groupStages(rows){
  const stages=[];
@@ -288,6 +298,16 @@ function render(){
  $("stepDownSpending").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.stepdown==="on")===!!s.stepDownSpending));
  const stepFields=$("stepDownFields");if(stepFields){stepFields.style.opacity=s.stepDownSpending?"1":".45";stepFields.querySelectorAll("input").forEach(x=>x.disabled=!s.stepDownSpending)}
  $("scenarioPresets").querySelectorAll("button").forEach(x=>{const p=SCENARIOS[x.dataset.scenario];x.classList.toggle("active",Math.abs(s.realReturnPct-p.realReturnPct)<.001&&Math.abs(s.inflationPct-p.inflationPct)<.001)});
+ $("monteCarloMode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.mc==="on")===!!s.monteCarlo));
+ const mcBox=$("mcResults");
+ if(s.monteCarlo){
+  const mc=runMonteCarlo(f);mcBox.style.display="block";
+  $("mcAssumption").textContent=`${mc.trials.toLocaleString()} trials · 16% volatility`;
+  $("mcSuccess").textContent=(mc.success*100).toFixed(1)+"%";
+  $("mcRetMedian").textContent=money(mc.retP50);$("mcRetRange").textContent=`10th–90th: ${money(mc.retP10)} – ${money(mc.retP90)}`;
+  $("mc95Median").textContent=money(mc.p50);$("mc95Range").textContent=`10th–90th: ${money(mc.p10)} – ${money(mc.p90)}`;
+  $("mc95P10").textContent=money(mc.p10);
+ }else mcBox.style.display="none";
  $("userBenefit").textContent="Claim "+s.userClaim+" · "+money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
  $("spouseBenefit").textContent="Claim "+s.spouseClaim+" · "+money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";
  $("mode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset.mode===s.mode));$("fixedWrap").style.display=s.mode==="fixed"?"block":"none";

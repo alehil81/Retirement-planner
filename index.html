@@ -34,7 +34,7 @@
 <div class="app">
 <section class="panel">
  <div class="top">
-  <div><h1>Retirement Planner</h1><div class="sub">VOO + 401(k) + Roth IRA + VA/FERS + Social Security · deterministic real-dollar planning</div><div id="saved" class="saved" style="margin-top:5px">Saved locally</div></div>
+  <div><h1>Retirement Planner</h1><div class="sub">VOO + 401(k) + Roth IRA + VA/FERS + Social Security · real-dollar planning + optional Monte Carlo</div><div id="saved" class="saved" style="margin-top:5px">Saved locally</div></div>
   <div class="actions"><button id="saveDefaults" class="btn" type="button">Save current as my defaults</button><button id="printPlan" class="btn" type="button">Print / Save PDF</button><button id="reset" class="btn" type="button">Reset</button></div>
  </div>
  <div id="warning" class="warning"></div>
@@ -49,6 +49,21 @@
   <button type="button" data-scenario="strong"><strong>Strong-return</strong><span>5.5% real · 2.5% inflation</span></button>
  </div>
  <div class="tiny" style="margin-top:10px">Presets change only the real-return and inflation assumptions. All other inputs stay unchanged.</div>
+ <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px">
+  <div class="row"><div><strong>Monte Carlo sequence-of-returns risk</strong><div class="tiny" style="margin-top:3px">2,000 simulated annual real-return sequences from your current age through 95.</div></div>
+   <div class="seg" id="monteCarloMode" style="width:min(300px,100%)"><button type="button" data-mc="on"><strong>On</strong><span>Model sequence risk</span></button><button type="button" data-mc="off"><strong>Off</strong><span>Deterministic only</span></button></div>
+  </div>
+  <div id="mcResults" class="soft" style="display:none;margin-top:12px">
+   <div class="row"><strong>Monte Carlo results</strong><span id="mcAssumption" class="muted">—</span></div>
+   <div class="milestones" style="margin-top:10px">
+    <div class="milestone"><div class="tiny">PLAN SUCCESS THROUGH 95</div><div id="mcSuccess" class="metric-sm">—</div><div class="tiny">All modeled spending targets funded</div></div>
+    <div class="milestone"><div class="tiny">MEDIAN AT RETIREMENT</div><div id="mcRetMedian" class="metric-sm">—</div><div id="mcRetRange" class="tiny">—</div></div>
+    <div class="milestone"><div class="tiny">MEDIAN AT AGE 95</div><div id="mc95Median" class="metric-sm">—</div><div id="mc95Range" class="tiny">—</div></div>
+    <div class="milestone"><div class="tiny">10TH PERCENTILE AT 95</div><div id="mc95P10" class="metric-sm">—</div><div class="tiny">Poor-return sequence outcome</div></div>
+   </div>
+   <div class="tiny" style="margin-top:10px">Monte Carlo uses the selected real return as the compound-return center, 16% annual real-return volatility, and the same annual return shock across VOO, 401(k), and Roth IRA. Results are stable between refreshes and are planning estimates, not forecasts.</div>
+  </div>
+ </div>
 </section>
 
 <section class="kpis">
@@ -170,7 +185,7 @@
 <details class="panel" style="margin-top:14px">
  <summary><span>Assumptions & methodology</span><span class="muted">Details</span></summary>
  <div class="muted" style="padding-top:8px">
-  <p>Accumulation and retirement projections are deterministic, not Monte Carlo. The selected real return is applied every year, so sequence-of-returns risk is not modeled. Roth IRA contributions are entered in today's dollars through retirement; the Roth IRA is then left invested with no retirement withdrawals in this model.</p>
+  <p>The main projection remains deterministic: the selected real return is applied every year. When Monte Carlo sequence risk is turned on, a separate risk analysis runs 2,000 simulated annual real-return sequences from the current age through 95. It uses the selected real return as the compound-return center, assumes 16% annual real-return volatility, and applies the same annual market return to VOO, 401(k), and Roth IRA. The Monte Carlo success rate means the modeled after-tax spending target is fully funded through age 95. Roth IRA contributions are entered in today's dollars until retirement; during retirement, Roth remains the second spending basket after the 401(k).</p>
   <p>Contribution escalation is applied separately to VOO and 401(k). Each phase begins at its entered base contribution and escalates annually thereafter.</p>
   <p>During retirement, the selected percentage of VOO dividends is available for spending and the remainder is reinvested. Because the real-return assumption is a total return, VOO ending balance is modeled as beginning balance × (1 + real total return) minus only the dividends actually used for spending. All dividends remain taxable whether used or reinvested. 401(k) ending balance is beginning balance × (1 + real return) minus withdrawals.</p>
   <p>Scenario presets are convenience controls only: they change the real-return and inflation inputs and leave all other plan assumptions untouched.</p>
@@ -183,6 +198,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=18"></script>
+<script src="retirement_app.js?v=19"></script>
 </body>
 </html>
