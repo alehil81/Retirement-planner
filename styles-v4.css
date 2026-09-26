@@ -164,3 +164,53 @@ button {
 @media(max-width:430px){
   .input-section-title{font-size:12px}
 }
+
+
+/* === v25 layout tighten === */
+.ssnote{padding-bottom:14px}
+.ss-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:8px 0 10px}
+.ss-card{display:grid;gap:10px}
+.ss-person{font-size:14px;font-weight:700}
+.ss-benefit{font-size:13px;font-weight:700;line-height:1.35}
+@media(max-width:780px){
+  .twocol{grid-template-columns:1fr}
+  .ss-grid{grid-template-columns:1fr}
+  .fields{grid-template-columns:1fr 1fr !important;gap:10px}
+  .section-fields{grid-template-columns:1fr 1fr !important;gap:10px}
+  .field.span-2{grid-column:1 / -1}
+}
+@media(max-width:560px){
+  input[type=text],input[type=date]{font-size:15px;min-height:44px;padding:9px 11px}
+  .soft{padding:11px}
+}
+@media(max-width:430px){
+  .fields{grid-template-columns:1fr 1fr !important}
+  .section-fields{grid-template-columns:1fr 1fr !important}
+}
+
+
+/* === v25 final polish === */
+.compact-section{padding:12px}
+.compact-section .input-section-header{margin-bottom:9px}
+.compact-section .section-fields{gap:9px 10px}
+.input-section-header{margin-bottom:10px}
+.section-fields{gap:10px}
+label{line-height:1.25}
+.btn-sm{min-height:36px;padding:0 11px;border-radius:10px;font-size:12px}
+.ss-actions{justify-content:flex-start}
+@media(max-width:780px){
+  .input-section{padding:12px}
+  .input-sections{gap:11px}
+  .section-fields{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:9px}
+  .compact-section .section-fields{gap:8px}
+  .section-chip{font-size:9px;padding:3px 7px}
+  .input-section-title{font-size:12px}
+  label{font-size:11px}
+}
+@media(max-width:390px){
+  .section-fields{gap:8px !important}
+  .input-section{padding:10px}
+  .moneyinput{padding-left:25px!important}
+  .prefix{left:10px}
+  .suffix{right:10px}
+}
