@@ -83,6 +83,11 @@ $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{chartMode=b.datas
 
 $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringify(s));savePlan();$("saved").textContent="Saved as your local defaults"}catch(e){showWarning("Could not save local defaults in this browser.")}};
 $("printPlan").onclick=()=>window.print();
+const SPENDING_PRESETS={
+ luxury:{expenses:400000,expenses80:350000,expenses90:250000},
+ controlled:{expenses:300000,expenses80:250000,expenses90:200000},
+ fallback:{expenses:225000,expenses80:200000,expenses90:175000}
+};
 const SCENARIOS={
  base:{realReturnPct:4.5,inflationPct:2.5},
  conservative:{realReturnPct:4.0,inflationPct:3.0},
@@ -92,11 +97,16 @@ const SCENARIOS={
 $("scenarioPresets").querySelectorAll("button").forEach(b=>b.onclick=()=>{
  const p=SCENARIOS[b.dataset.scenario];s.realReturnPct=p.realReturnPct;s.inflationPct=p.inflationPct;syncInputs();savePlan();render();
 });
+$("spendingPresets").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+ const p=SPENDING_PRESETS[b.dataset.spendingPreset];
+ s.expenses=p.expenses;s.expenses80=p.expenses80;s.expenses90=p.expenses90;s.stepDownSpending=true;
+ syncInputs();savePlan();render();
+});
 $("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.stepDownSpending=b.dataset.stepdown==="on";savePlan();render()});
 $("monteCarloMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.monteCarlo=b.dataset.mc==="on";savePlan();render()});
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:19,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:20,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -298,6 +308,7 @@ function render(){
  $("stepDownSpending").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.stepdown==="on")===!!s.stepDownSpending));
  const stepFields=$("stepDownFields");if(stepFields){stepFields.style.opacity=s.stepDownSpending?"1":".45";stepFields.querySelectorAll("input").forEach(x=>x.disabled=!s.stepDownSpending)}
  $("scenarioPresets").querySelectorAll("button").forEach(x=>{const p=SCENARIOS[x.dataset.scenario];x.classList.toggle("active",Math.abs(s.realReturnPct-p.realReturnPct)<.001&&Math.abs(s.inflationPct-p.inflationPct)<.001)});
+ $("spendingPresets").querySelectorAll("button").forEach(x=>{const p=SPENDING_PRESETS[x.dataset.spendingPreset];const match=!!s.stepDownSpending&&Math.round(s.expenses)===p.expenses&&Math.round(s.expenses80)===p.expenses80&&Math.round(s.expenses90)===p.expenses90;x.classList.toggle("active",match)});
  $("monteCarloMode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.mc==="on")===!!s.monteCarlo));
  const mcBox=$("mcResults");
  if(s.monteCarlo){

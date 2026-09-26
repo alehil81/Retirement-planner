@@ -136,6 +136,15 @@
    <div class="field"><label>Use VOO dividends for spending</label><div class="seg" id="divUseMode"><button type="button" data-div-use="on"><strong>On</strong><span>Use selected %</span></button><button type="button" data-div-use="off"><strong>Off</strong><span>Reinvest all</span></button></div></div>
    <div class="field" id="divPctField"><label>VOO dividends used for spending</label><div class="inputwrap"><input data-key="vooDividendUsePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Annual after-tax expenses (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="expenses" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field" style="grid-column:1/-1">
+    <label>Spending presets</label>
+    <div class="seg" id="spendingPresets" style="grid-template-columns:1fr">
+     <button type="button" data-spending-preset="luxury"><strong>Luxury retirement</strong><span>$400k → $350k → $250k</span></button>
+     <button type="button" data-spending-preset="controlled"><strong>Controlled affluent retirement</strong><span>$300k → $250k → $200k</span></button>
+     <button type="button" data-spending-preset="fallback"><strong>Fallback retirement</strong><span>$225k → $200k → $175k</span></button>
+    </div>
+    <div class="tiny" style="margin-top:8px">Selecting a preset turns step-down spending on and fills the three spending levels. You can edit any amount afterward.</div>
+   </div>
    <div class="field"><label>Step-down spending</label><div class="seg" id="stepDownSpending"><button type="button" data-stepdown="on"><strong>On</strong><span>Lower later-life spending</span></button><button type="button" data-stepdown="off"><strong>Off</strong><span>Same real spending for life</span></button></div></div>
    <div id="stepDownFields" class="soft" style="grid-column:1/-1">
     <div class="row" style="margin-bottom:10px"><strong>Later-life spending (today's $)</strong><span class="muted">When step-down is on</span></div>
@@ -198,6 +207,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=19"></script>
+<script src="retirement_app.js?v=20"></script>
 </body>
 </html>

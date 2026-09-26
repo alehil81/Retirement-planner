@@ -1,4 +1,4 @@
-Retirement Planner v19 — optional Monte Carlo sequence-of-returns analysis
+Retirement Planner v20 — spending presets
 
 Replace only:
 - index.html
@@ -7,15 +7,28 @@ Replace only:
 
 Keep styles-v4.css unchanged.
 
-New feature:
-- Monte Carlo sequence-of-returns toggle in the Scenario presets section.
-- OFF: all existing deterministic outputs behave exactly as before.
-- ON: adds a separate 2,000-trial Monte Carlo risk summary without replacing the deterministic plan outputs.
-- Simulates annual real returns from the current age through age 95.
-- Uses the selected real return as the compound-return center and 16% annual real-return volatility.
-- Applies the same market return each year to VOO, 401(k), and Roth IRA.
-- Uses a fixed random seed so results remain stable between refreshes and comparable across assumption changes.
-- Reports plan success through age 95, median and 10th–90th percentile portfolio at retirement, and median / 10th / 90th percentile portfolio at age 95.
-- Success means every modeled annual after-tax spending target can be funded through age 95 using the existing 401(k) -> Roth -> VOO waterfall.
+New feature: three editable step-down spending presets
 
-All v18 features remain intact: scenario presets, step-down spending, RMDs, Roth/VOO spending waterfall, Social Security options, taxes, FERS survivor election, and printing.
+Luxury retirement
+- Through age 79: $400,000
+- Ages 80–89: $350,000
+- Age 90+: $250,000
+
+Controlled affluent retirement
+- Through age 79: $300,000
+- Ages 80–89: $250,000
+- Age 90+: $200,000
+
+Fallback retirement
+- Through age 79: $225,000
+- Ages 80–89: $200,000
+- Age 90+: $175,000
+
+Behavior:
+- Selecting a preset automatically turns Step-down spending ON.
+- The preset fills the existing three spending fields.
+- All three fields remain fully editable afterward.
+- The matching preset remains highlighted only while the current values exactly match it.
+- If any value is edited, the preset highlight disappears, effectively making it a custom spending plan.
+
+Everything else from v19 remains unchanged, including Monte Carlo, return/inflation scenarios, RMDs, the 401(k) → Roth IRA → VOO withdrawal waterfall, Social Security controls, FERS survivor election, and printing.
