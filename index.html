@@ -78,7 +78,16 @@
 <div class="panel">
  <details open>
   <summary><span>Plan & portfolio</span><span class="muted">Inputs</span></summary>
-  <div class="fields" style="padding:8px 0 16px">
+  
+<div class="input-sections">
+ <div class="input-section">
+  <div class="input-section-header">
+   <div>
+    <div class="input-section-title">Core plan assumptions</div>
+    <div class="input-section-subtitle">Ages, target, inflation, and real return assumptions.</div>
+   </div>
+  </div>
+  <div class="section-fields">
    <div class="field"><label>Your age</label><input data-key="currentAge" type="text" inputmode="decimal"></div>
    <div class="field"><label>Your birth year (for RMD rules)</label><input data-key="birthYear" type="text" inputmode="numeric"></div>
    <div class="field"><label>Spouse age</label><input data-key="spouseAge" type="text" inputmode="decimal"></div>
@@ -86,28 +95,79 @@
    <div class="field"><label>Target portfolio</label><div class="inputwrap"><span class="prefix">$</span><input data-key="targetPortfolio" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Inflation</label><div class="inputwrap"><input data-key="inflationPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Real return</label><div class="inputwrap"><input data-key="realReturnPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+  </div>
+ </div>
+
+ <div class="input-section">
+  <div class="input-section-header">
+   <div>
+    <div class="input-section-title">Starting balances</div>
+    <div class="input-section-subtitle">Current balances that feed the projection starting point.</div>
+   </div>
+  </div>
+  <div class="section-fields">
    <div class="field"><label>VOO balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="vooBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>401(k) balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k401Balance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Roth IRA balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div><div></div>
+   <div class="field"><label>Roth IRA balance</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothBalance" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+  </div>
+ </div>
 
+ <div class="input-section">
+  <div class="input-section-header">
+   <div>
+    <div class="input-section-title">Contribution phase 1</div>
+    <div class="input-section-subtitle">Starting contribution levels before the first phase change.</div>
+   </div>
+   <span class="section-chip">Current age → Phase 2</span>
+  </div>
+  <div class="section-fields">
    <div class="field"><label>Phase 1 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Phase 1 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Phase 1 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothContribution" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div><div></div>
-
+   <div class="field"><label>Phase 1 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothContribution" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Annual VOO contribution increase (nominal)</label><div class="inputwrap"><input data-key="vooIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Annual 401(k) contribution increase (nominal)</label><div class="inputwrap"><input data-key="kIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+  </div>
+ </div>
 
-   <div class="field"><label>Phase 2 starts at age</label><input data-key="changeAge" type="text" inputmode="numeric"></div><div></div>
+ <div class="input-section">
+  <div class="input-section-header">
+   <div>
+    <div class="input-section-title">Contribution phase 2</div>
+    <div class="input-section-subtitle">Editable mid-career contribution phase.</div>
+   </div>
+   <span class="section-chip">Starts at selected age</span>
+  </div>
+  <div class="section-fields">
+   <div class="field"><label>Phase 2 starts at age</label><input data-key="changeAge" type="text" inputmode="numeric"></div>
    <div class="field"><label>Phase 2 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Phase 2 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Phase 2 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="roth2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div><div></div>
+   <div class="field"><label>Phase 2 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="roth2" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+  </div>
+ </div>
 
-   <div class="field"><label>Phase 3 starts at age</label><input data-key="changeAge3" type="text" inputmode="numeric"></div><div></div>
+ <div class="input-section">
+  <div class="input-section-header">
+   <div>
+    <div class="input-section-title">Contribution phase 3</div>
+    <div class="input-section-subtitle">Editable pre-retirement contribution phase.</div>
+   </div>
+   <span class="section-chip">Starts at selected age</span>
+  </div>
+  <div class="section-fields">
+   <div class="field"><label>Phase 3 starts at age</label><input data-key="changeAge3" type="text" inputmode="numeric"></div>
    <div class="field"><label>Phase 3 VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo3" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Phase 3 401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k3" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>Phase 3 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="roth3" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div><div></div>
+   <div class="field"><label>Phase 3 Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="roth3" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
   </div>
-  <div class="tiny" style="padding-bottom:12px">Contribution dollar inputs are in today's dollars. Phase 2 and Phase 3 start ages are editable. VOO and 401(k) increase rates are nominal; the app converts them to real growth using inflation before compounding within each phase. Roth IRA phase amounts are treated as constant real (today's-dollar) contributions within each phase. <span id="contributionGrowthNote"></span> Each new phase restarts from its entered base amount.</div>
+ </div>
+
+ <details class="note-disclosure">
+  <summary><span>Contribution notes</span><span class="muted">Tap to expand</span></summary>
+  <div class="note-body">
+   <div class="tiny">Contribution dollar inputs are in today's dollars. Phase 2 and Phase 3 start ages are editable. VOO and 401(k) increase rates are nominal; the app converts them to real growth using inflation before compounding within each phase. Roth IRA phase amounts are treated as constant real (today's-dollar) contributions within each phase. <span id="contributionGrowthNote"></span> Each new phase restarts from its entered base amount.</div>
+  </div>
+ </details>
+</div>
  </details>
 
  <details>
@@ -170,7 +230,7 @@
    <div class="field"><label>Estimated effective ordinary tax rate</label><div class="inputwrap"><input data-key="ordinaryTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Qualified dividend tax rate</label><div class="inputwrap"><input data-key="dividendTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Estimated tax on VOO share sales</label><div class="inputwrap"><input data-key="vooSaleTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
-   <div class="tiny" style="align-self:center">Planning shortcut: default 10% haircut on gross VOO sale proceeds. Actual tax applies only to realized gains, so this is an approximate blended tax estimate.</div>
+   <details class="note-disclosure" style="align-self:start;grid-column:1/-1"><summary><span>VOO sale-tax note</span><span class="muted">Tap to expand</span></summary><div class="note-body"><div class="tiny">Planning shortcut: default 10% haircut on gross VOO sale proceeds. Actual tax applies only to realized gains, so this is an approximate blended tax estimate.</div></div></details>
    <div class="field"><label>Annual moonlighting income</label><div class="inputwrap"><span class="prefix">$</span><input data-key="moonlightIncome" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Moonlighting through your age</label><input data-key="moonlightThroughAge" type="text" inputmode="decimal"></div>
   </div>
