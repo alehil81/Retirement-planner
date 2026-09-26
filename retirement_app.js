@@ -2,17 +2,17 @@
 const PLAN_KEY="retirement-planner-standalone-v1";
 const DEFAULT_KEY="retirement-planner-personal-defaults-v2";
 const GENERIC={
- currentAge:45,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
+ currentAge:45,birthYear:1981,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
  vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,roth2:0,roth3:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:50,voo2:30000,k2:30000,changeAge3:60,voo3:30000,k3:30000,
  high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,stepDownSpending:false,expenses80:300000,expenses90:275000,ordinaryTaxPct:20,dividendTaxPct:15,vooSaleTaxPct:10,
  moonlightIncome:0,moonlightThroughAge:70,
- fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",monteCarlo:false,startDate:"2018-12-01"
+ fixedPct:3.5,userClaim:70,spouseClaim:70,userFraMonthly:4152,spouseFraMonthly:4152,mode:"need",monteCarlo:false,startDate:"2018-12-01"
 };
 const LIMITS={
- currentAge:[18,90],spouseAge:[18,100],retirementAge:[19,100],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
+ currentAge:[18,90],birthYear:[1900,2100],spouseAge:[18,100],retirementAge:[19,95],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
  vooBalance:[0,1e11],k401Balance:[0,1e11],rothBalance:[0,1e11],rothContribution:[0,1e9],roth2:[0,1e9],roth3:[0,1e9],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
  voo2:[0,1e9],k2:[0,1e9],changeAge3:[18,100],voo3:[0,1e9],k3:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],expenses80:[0,1e8],expenses90:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],vooSaleTaxPct:[0,40],
- moonlightIncome:[0,1e8],moonlightThroughAge:[18,100],fixedPct:[0,20]
+ moonlightIncome:[0,1e8],moonlightThroughAge:[18,100],fixedPct:[0,20],userFraMonthly:[0,50000],spouseFraMonthly:[0,50000]
 };
 const $=id=>document.getElementById(id);
 const money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(Number.isFinite(n)?n:0);
@@ -23,6 +23,10 @@ let s=loadInitial(),chartMode="accumulation";
 
 function migratePlan(raw){
  const p={...GENERIC,...(raw||{})};
+ p.retirementAge=Math.min(95,Math.max(19,Number(p.retirementAge)||GENERIC.retirementAge));
+ if(raw&&raw.birthYear==null){
+  p.birthYear=new Date().getFullYear()-Math.floor(Number(p.currentAge)||GENERIC.currentAge);
+ }
 
  // Preserve the old single Roth contribution as all three phase amounts
  // unless the newer phase-specific values already exist.
@@ -65,6 +69,7 @@ function valid(k,n){
  const l=LIMITS[k];
  if(l&&!(n>=l[0]&&n<=l[1]))return false;
  if((k==="changeAge"||k==="changeAge3")&&!Number.isInteger(n))return false;
+ if(k==="birthYear"&&(!Number.isInteger(n)||n>new Date().getFullYear()))return false;
  if(k==="changeAge"&&Number.isFinite(s.changeAge3)&&n>=s.changeAge3)return false;
  if(k==="changeAge3"&&Number.isFinite(s.changeAge)&&n<=s.changeAge)return false;
  return true;
@@ -80,6 +85,8 @@ function bindInputs(){
    if(n===null||!valid(k,n)){
     s[k]=Number.isFinite(prev)?prev:GENERIC[k];
     if(k==="changeAge"||k==="changeAge3")showWarning("Phase start ages must be whole numbers, and Phase 3 must start after Phase 2. The previous value was restored.");
+    else if(k==="retirementAge"&&n!==null&&n>95)showWarning("Retirement age must be 95 or younger because projections currently run through age 95.");
+    else if(k==="birthYear")showWarning("Birth year must be a valid whole year no later than the current year. The previous value was restored.");
     else showWarning("That value is outside the allowed range, so the previous value was restored.");
    }
    else{s[k]=n;savePlan()}
@@ -119,6 +126,7 @@ function bindSSCustom(id,who){
 }
 bindSSCustom("userClaimCustom","user");
 bindSSCustom("spouseClaimCustom","spouse");
+$("resetSSBenchmark").onclick=()=>{s.userFraMonthly=4152;s.spouseFraMonthly=4152;syncInputs();savePlan();render()};
 $("mode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.mode=b.dataset.mode;savePlan();render()});
 $("fersSurvivor").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.fersFullSurvivor=b.dataset.fersSurvivor==="on";savePlan();render()});
 $("divUseMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.useVooDividends=b.dataset.divUse==="on";savePlan();syncDividendControls();render()});
@@ -147,11 +155,11 @@ $("spendingPresets").querySelectorAll("button").forEach(b=>b.onclick=()=>{
 });
 $("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.stepDownSpending=b.dataset.stepdown==="on";savePlan();render()});
 $("monteCarloMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.monteCarlo=b.dataset.mc==="on";savePlan();render()});
-$("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
+$("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base=migratePlan(JSON.parse(d))}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:22,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:23,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
-$("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
+$("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s=migratePlan(plan);syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
 function syncInputs(){$("startDate").value=s.startDate;document.querySelectorAll("[data-key]").forEach(showInput)}
 function realContributionIncrease(nominalPct){
@@ -193,28 +201,37 @@ function fers(){
  const survivorReduction=s.fersFullSurvivor?.10:0,annual=unreducedAnnual*(1-survivorReduction),survivorAnnual=unreducedAnnual*.50;
  return{svc,m,unreducedAnnual,survivorReduction,survivorAnnual,annual};
 }
-function ssMonthly(a){
+function ssFactor(a){
  a=Math.max(62,Math.min(70,Math.round(Number(a)||62)));
- if(a===62)return 2969;
- if(a>=70)return 5181;
- // Anchor the existing 2026 benchmark values at 62, FRA 67, and 70.
- // Intermediate ages follow the statutory early/delayed claim percentage curve.
- if(a<=67){
-  let factor;
-  if(a<=64)factor=.70+(a-62)*.05;
-  else factor=.80+(a-64)*(1/15);
-  return Math.round(2969+((factor-.70)/.30)*(4152-2969));
+ if(a<67){
+  const monthsEarly=(67-a)*12;
+  const first=Math.min(36,monthsEarly),extra=Math.max(0,monthsEarly-36);
+  return 1-first*(5/9)/100-extra*(5/12)/100;
  }
- const factor=1+(a-67)*.08;
- return Math.round(4152+((factor-1)/.24)*(5181-4152));
+ if(a>67)return 1+(a-67)*.08;
+ return 1;
 }
-const ssAnnual=a=>ssMonthly(a)*12;
+function ssMonthly(a,fraMonthly){
+ const fra=Math.max(0,Number(fraMonthly)||0);
+ return Math.floor(fra*ssFactor(a));
+}
+const ssAnnual=(a,fraMonthly)=>ssMonthly(a,fraMonthly)*12;
 
 const RMD_DIVISORS={
- 75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,
+ 70:29.2,71:28.3,72:27.4,73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,
  85:16.0,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9
 };
+function rmdStartAgeForBirthYear(y){
+ y=Math.round(Number(y)||GENERIC.birthYear);
+ if(y>=1960)return 75;
+ if(y>=1951)return 73;
+ if(y>=1949)return 72;
+ return 70.5;
+}
+function rmdStartAge(){return rmdStartAgeForBirthYear(s.birthYear)}
+function formatRmdAge(a){return a===70.5?"70½":String(a)}
 function rmdForAge(age,priorYearEnd401k){
+ if(age<Math.ceil(rmdStartAge()))return 0;
  const divisor=RMD_DIVISORS[Math.round(age)];
  return divisor?Math.max(0,priorYearEnd401k)/divisor:0;
 }
@@ -247,8 +264,8 @@ function retirementWithReturns(p,f,returns){
   const r=returns?.[i]??s.realReturnPct/100;
   const expenseTarget=spendingForAge(age);
   const spa=s.spouseAge+(age-s.currentAge);
-  const u=age>=s.userClaim?ssAnnual(s.userClaim):0;
-  const sp=spa>=s.spouseClaim?ssAnnual(s.spouseClaim):0;
+  const u=age>=s.userClaim?ssAnnual(s.userClaim,s.userFraMonthly):0;
+  const sp=spa>=s.spouseClaim?ssAnnual(s.spouseClaim,s.spouseFraMonthly):0;
   const ss=u+sp;
   const moonlight=s.moonlightIncome>0&&age<=s.moonlightThroughAge?s.moonlightIncome:0;
   const div=voo*s.divYield/100;
@@ -354,14 +371,15 @@ function render(){
  const growthNote=$("contributionGrowthNote");
  if(growthNote){
   const vr=realContributionIncrease(s.vooIncreasePct)*100,kr=realContributionIncrease(s.kIncreasePct)*100;
-  growthNote.textContent=`Current real contribution growth within each VOO/401(k) phase: VOO ${vr.toFixed(2)}%/yr · 401(k) ${kr.toFixed(2)}%/yr.`;
+  growthNote.textContent=`To keep contributions approximately flat in today's dollars, set the nominal increase about equal to inflation; with ${s.inflationPct.toFixed(2)}% inflation, use about ${s.inflationPct.toFixed(2)}%. Current real contribution growth within each VOO/401(k) phase: VOO ${vr.toFixed(2)}%/yr · 401(k) ${kr.toFixed(2)}%/yr.`;
  }
 
  syncDividendControls();
 
  $("service").textContent=f.svc.toFixed(1)+" years";$("fers").textContent=money(f.annual)+"/yr · "+money(f.annual/12)+"/mo";$("fersTop").textContent=money(f.annual/12)+"/mo";
- $("userSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.userClaim));
- $("spouseSS").querySelectorAll("button").forEach(x=>x.classList.toggle("active",+x.dataset.age===s.spouseClaim));
+ $("userSS").querySelectorAll("button").forEach(x=>{x.classList.toggle("active",+x.dataset.age===s.userClaim);const span=x.querySelector("span");if(span)span.textContent=money(ssMonthly(+x.dataset.age,s.userFraMonthly))+"/mo"});
+ $("spouseSS").querySelectorAll("button").forEach(x=>{x.classList.toggle("active",+x.dataset.age===s.spouseClaim);const span=x.querySelector("span");if(span)span.textContent=money(ssMonthly(+x.dataset.age,s.spouseFraMonthly))+"/mo"});
+ const rmdLabel=$("rmdStartLabel");if(rmdLabel)rmdLabel.textContent=`Automatic from age ${formatRmdAge(rmdStartAge())}`;
  $("userClaimCustom").value=(s.userClaim===62||s.userClaim===70)?"":String(s.userClaim);
  $("spouseClaimCustom").value=(s.spouseClaim===62||s.spouseClaim===70)?"":String(s.spouseClaim);
  $("fersSurvivor").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.fersSurvivor==="on")===!!s.fersFullSurvivor));
@@ -379,8 +397,8 @@ function render(){
   $("mc95Median").textContent=money(mc.p50);$("mc95Range").textContent=`10th–90th: ${money(mc.p10)} – ${money(mc.p90)}`;
   $("mc95P10").textContent=money(mc.p10);
  }else mcBox.style.display="none";
- $("userBenefit").textContent="Claim "+s.userClaim+" · "+money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
- $("spouseBenefit").textContent="Claim "+s.spouseClaim+" · "+money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";
+ $("userBenefit").textContent="Claim "+s.userClaim+" · "+money(ssAnnual(s.userClaim,s.userFraMonthly)/12)+"/mo · "+money(ssAnnual(s.userClaim,s.userFraMonthly))+"/yr";
+ $("spouseBenefit").textContent="Claim "+s.spouseClaim+" · "+money(ssAnnual(s.spouseClaim,s.spouseFraMonthly)/12)+"/mo · "+money(ssAnnual(s.spouseClaim,s.spouseFraMonthly))+"/yr";
  $("mode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset.mode===s.mode));$("fixedWrap").style.display=s.mode==="fixed"?"block":"none";
 
  $("income").textContent=money(b.afterTax)+"/yr";$("incomeMo").textContent=`Age ${b.age} · ${money(b.afterTax/12)}/mo after estimated tax`;$("expenseOut").textContent=money(b.expenses)+"/yr";
@@ -396,7 +414,7 @@ function render(){
  
  $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross modeled income (includes reinvested dividends)";
 
- const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)} · Roth ${compact(z.endRoth)}</div></div>`}).join("");
+ const ages=[70,80,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">UPON REACHING AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)} · Roth ${compact(z.endRoth)}</div></div>`}).join("");
 
  const stagesEl=$("incomeStages");
  if(stagesEl){stagesEl.innerHTML=c.stages.map(st=>{
@@ -431,7 +449,7 @@ function draw(existing){
  }else if(chartMode==="decumulation"){
   const d=c.ret.rows,max=Math.max(...d.map(x=>x.endTotal),1)*1.08,a=axes(max,d[0].age,d.at(-1).age);let h=a.g+ticks(d,a);
   h+=poly(d,a,"endTotal","--s2",4)+poly(d,a,"endV","--s3",2.5)+poly(d,a,"endK","--s4",2.5);
-  $("chart").innerHTML=h;$("chartSub").textContent="Year-end retirement balances after the spending waterfall: 401(k), then Roth IRA, then VOO sales, with the RMD overlay from age 75.";
+  $("chart").innerHTML=h;$("chartSub").textContent="Year-end retirement balances after the spending waterfall: 401(k), then Roth IRA, then VOO sales, with cohort-based RMD rules.";
  }else if(chartMode==="income"){
   const d=c.ret.rows,max=Math.max(s.expenses,...d.map(x=>x.afterTax),...d.map(x=>x.baseAfterTax),1)*1.1,a=axes(max,d[0].age,d.at(-1).age);let h=a.g+ticks(d,a);
   h+=poly(d,a,"afterTax","--s2",4)+poly(d,a,"baseAfterTax","--s3",2.5);

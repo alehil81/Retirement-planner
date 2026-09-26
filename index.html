@@ -58,8 +58,8 @@
    <div class="milestones" style="margin-top:10px">
     <div class="milestone"><div class="tiny">PLAN SUCCESS THROUGH 95</div><div id="mcSuccess" class="metric-sm">—</div><div class="tiny">All modeled spending targets funded</div></div>
     <div class="milestone"><div class="tiny">MEDIAN AT RETIREMENT</div><div id="mcRetMedian" class="metric-sm">—</div><div id="mcRetRange" class="tiny">—</div></div>
-    <div class="milestone"><div class="tiny">MEDIAN AT AGE 95</div><div id="mc95Median" class="metric-sm">—</div><div id="mc95Range" class="tiny">—</div></div>
-    <div class="milestone"><div class="tiny">10TH PERCENTILE AT 95</div><div id="mc95P10" class="metric-sm">—</div><div class="tiny">Poor-return sequence outcome</div></div>
+    <div class="milestone"><div class="tiny">MEDIAN UPON REACHING AGE 95</div><div id="mc95Median" class="metric-sm">—</div><div id="mc95Range" class="tiny">—</div></div>
+    <div class="milestone"><div class="tiny">10TH PERCENTILE UPON REACHING AGE 95</div><div id="mc95P10" class="metric-sm">—</div><div class="tiny">Poor-return sequence outcome</div></div>
    </div>
    <div class="tiny" style="margin-top:10px">Monte Carlo uses the selected real return as the compound-return center, 16% annual real-return volatility, and the same annual return shock across VOO, 401(k), and Roth IRA. Results are stable between refreshes and are planning estimates, not forecasts.</div>
   </div>
@@ -70,7 +70,7 @@
  <div class="panel"><div class="tiny">COMBINED AT RETIREMENT</div><div id="combined" class="metric">—</div><div id="nominal" class="muted">—</div></div>
  <div class="panel"><div class="tiny">VOO AT RETIREMENT</div><div id="vooOut" class="metric">—</div><div id="vooSub" class="muted">—</div></div>
  <div class="panel"><div class="tiny">401(K) AT RETIREMENT</div><div id="kOut" class="metric">—</div><div id="kSub" class="muted">—</div></div>
- <div class="panel"><div class="tiny">PORTFOLIO AT AGE 95</div><div id="age95Out" class="metric">—</div><div id="age95Sub" class="muted">—</div></div>
+ <div class="panel"><div class="tiny">PORTFOLIO UPON REACHING AGE 95</div><div id="age95Out" class="metric">—</div><div id="age95Sub" class="muted">—</div></div>
  <div class="panel"><div class="tiny">TARGET REACHED</div><div id="targetOut" class="metric">—</div><div class="muted">First year combined balance meets target</div></div>
 </section>
 
@@ -80,6 +80,7 @@
   <summary><span>Plan & portfolio</span><span class="muted">Inputs</span></summary>
   <div class="fields" style="padding:8px 0 16px">
    <div class="field"><label>Your age</label><input data-key="currentAge" type="text" inputmode="decimal"></div>
+   <div class="field"><label>Your birth year (for RMD rules)</label><input data-key="birthYear" type="text" inputmode="numeric"></div>
    <div class="field"><label>Spouse age</label><input data-key="spouseAge" type="text" inputmode="decimal"></div>
    <div class="field"><label>Retirement age</label><input data-key="retirementAge" type="text" inputmode="decimal"></div>
    <div class="field"><label>Target portfolio</label><div class="inputwrap"><span class="prefix">$</span><input data-key="targetPortfolio" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
@@ -121,21 +122,24 @@
 
  <details open>
   <summary><span>Social Security</span><span class="muted">Claim age 62–70</span></summary>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 0 14px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:8px 0 10px">
    <div class="soft">
     <div style="font-size:14px;font-weight:700;margin-bottom:8px">You</div>
-    <div class="seg" id="userSS"><button type="button" data-age="62"><strong>Age 62</strong><span>$2,969/mo</span></button><button type="button" data-age="70"><strong>Age 70</strong><span>$5,181/mo</span></button></div>
+    <div class="field" style="margin-bottom:10px"><label>Monthly benefit at FRA age 67 (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="userFraMonthly" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+    <div class="seg" id="userSS"><button type="button" data-age="62"><strong>Age 62</strong><span>—/mo</span></button><button type="button" data-age="70"><strong>Age 70</strong><span>—/mo</span></button></div>
     <div class="field" style="margin-top:10px"><label>Custom claim age (62–70)</label><input id="userClaimCustom" type="text" inputmode="numeric" placeholder="62–70"></div>
     <div id="userBenefit" style="font-size:13px;font-weight:700;margin-top:10px">—</div>
    </div>
    <div class="soft">
     <div style="font-size:14px;font-weight:700;margin-bottom:8px">Spouse</div>
-    <div class="seg" id="spouseSS"><button type="button" data-age="62"><strong>Age 62</strong><span>$2,969/mo</span></button><button type="button" data-age="70"><strong>Age 70</strong><span>$5,181/mo</span></button></div>
+    <div class="field" style="margin-bottom:10px"><label>Monthly benefit at FRA age 67 (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="spouseFraMonthly" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+    <div class="seg" id="spouseSS"><button type="button" data-age="62"><strong>Age 62</strong><span>—/mo</span></button><button type="button" data-age="70"><strong>Age 70</strong><span>—/mo</span></button></div>
     <div class="field" style="margin-top:10px"><label>Custom claim age (62–70)</label><input id="spouseClaimCustom" type="text" inputmode="numeric" placeholder="62–70"></div>
     <div id="spouseBenefit" style="font-size:13px;font-weight:700;margin-top:10px">—</div>
    </div>
   </div>
-  <div class="tiny" style="padding-bottom:14px">2026 SSA maximum-benefit benchmark in today’s dollars. Under current law, delayed-retirement credits stop at age 70. Actual future benefits may differ.</div>
+  <div class="actions" style="padding-bottom:8px"><button id="resetSSBenchmark" class="btn" type="button">Reset both to 2026 FRA benchmark</button></div>
+  <div class="tiny" style="padding-bottom:14px">Both FRA fields are automatically populated with the 2026 planning benchmark of $4,152/month at age 67. Claim-age benefits from 62–70 are calculated from that FRA amount using the statutory early-retirement reductions and delayed-retirement credits. You can optionally override the FRA amounts later.</div>
  </details>
 
  <details open>
@@ -173,7 +177,7 @@
   <div class="tiny" style="margin-bottom:6px">401(k) withdrawal method</div>
   <div class="seg" id="mode"><button type="button" data-mode="need"><strong>Need-based</strong><span>Fill after-tax gap</span></button><button type="button" data-mode="fixed"><strong>Fixed rate</strong><span>Choose rate</span></button></div>
   <div id="fixedWrap" class="field" style="display:none;margin-top:12px"><label>Fixed withdrawal rate</label><div class="inputwrap"><input data-key="fixedPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
-  <div class="soft" style="margin-top:12px"><div class="row"><span class="muted">Withdrawal order</span><strong>401(k) → Roth → VOO</strong></div><div class="tiny" style="margin-top:6px">RMDs begin automatically at age 75 using the IRS Uniform Lifetime Table. The app uses the larger of the planned 401(k) withdrawal or the RMD, then uses Roth IRA if the 401(k) cannot fill the spending gap, and finally sells VOO shares if needed. Any after-tax forced RMD excess above spending needs is reinvested into VOO.</div></div>
+  <div class="soft" style="margin-top:12px"><div class="row"><span class="muted">Withdrawal order</span><strong>401(k) → Roth → VOO</strong></div><div class="row" style="margin-top:6px"><span class="muted">RMD rule</span><strong id="rmdStartLabel">—</strong></div><div class="tiny" style="margin-top:6px">The RMD starting age is derived automatically from the entered birth year under current law and uses the IRS Uniform Lifetime Table. The app uses the larger of the planned 401(k) withdrawal or the RMD, then uses Roth IRA if the 401(k) cannot fill the spending gap, and finally sells VOO shares if needed. Any after-tax forced RMD excess above spending needs is reinvested into VOO.</div></div>
   <div class="tiny" style="padding:12px 0 14px">Tax estimate is intentionally simple: FERS, moonlighting, and 401(k) withdrawals use the ordinary effective rate, qualified VOO dividends use the dividend rate, and 85% of Social Security is assumed taxable at the ordinary rate. VOO share sales use the separate estimated sale-tax haircut above. All VOO dividends are taxed even when reinvested. Moonlighting is included through the selected age, inclusive.</div>
  </details>
 
@@ -211,13 +215,13 @@
   <p>Scenario presets are convenience controls only: they change the real-return and inflation inputs and leave all other plan assumptions untouched.</p>
   <p>When step-down spending is enabled, the main annual after-tax expense input applies through age 79, the age-80 amount applies from ages 80–89, and the age-90 amount applies from age 90 onward. All spending inputs are expressed in today’s dollars.</p>
   <p>Need-based withdrawals use a spending waterfall. The calculator first draws from the traditional 401(k), subject to the available balance and the RMD minimum. If the 401(k) cannot fully cover the estimated after-tax spending gap, the remaining gap is filled from Roth IRA withdrawals, which are modeled as tax-free qualified distributions. If the Roth IRA is also exhausted, the calculator sells VOO shares to fill the remaining spending gap. Optional moonlighting income is included through the selected age and reduces portfolio withdrawals during those years.</p>
-  <p>Under current law, this plan models RMDs beginning at age 75 using the IRS Uniform Lifetime Table. Each year's RMD is based on the prior year-end 401(k) balance. The model assumes the first RMD is taken during the age-75 year rather than delayed to the following April. The actual 401(k) withdrawal is at least the RMD when sufficient 401(k) assets are available. If an RMD forces more after-tax cash out than is needed for spending, that excess is reinvested into VOO.</p>
+  <p>Under current law, this plan derives the applicable RMD starting age from the entered birth year and uses the IRS Uniform Lifetime Table. Each year's RMD is based on the prior year-end 401(k) balance. The model assumes the first RMD is taken during the applicable RMD year rather than delayed to the following April. The actual 401(k) withdrawal is at least the RMD when sufficient 401(k) assets are available. If an RMD forces more after-tax cash out than is needed for spending, that excess is reinvested into VOO.</p>
   <p>FERS estimate uses high-3 × service years × 1.0%, or 1.1% at age 62+ with at least 20 years of service. If full FERS survivor election is on, the retiree annuity is reduced by 10%; the survivor benefit is 50% of the unreduced annuity. Detailed COLA rules are not modeled.</p>
-  <p>Social Security uses 2026 maximum-benefit planning benchmarks: $2,969/month at 62 and $5,181/month at 70 per person. Actual future benefits may differ.</p>
+  <p>Social Security is modeled from an editable monthly benefit at full retirement age 67 for each person. The fields default to the 2026 planning benchmark of $4,152/month, and claim ages 62–70 are calculated from that FRA amount using the statutory early-retirement reductions and delayed-retirement credits. Actual future benefits may differ.</p>
   <p>Taxes are only an approximation, not a tax return calculation. VOO share sales use the entered blended tax haircut on gross sale proceeds (10% by default) instead of tracking individual tax lots or cost basis. Actual capital-gains tax applies only to the realized-gain portion of a sale, so this shortcut can differ from the eventual tax bill. Medicare IRMAA, state taxes, and detailed Social Security taxation are not modeled.</p>
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=22"></script>
+<script src="retirement_app.js?v=23"></script>
 </body>
 </html>
