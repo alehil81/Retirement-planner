@@ -4,14 +4,14 @@ const DEFAULT_KEY="retirement-planner-personal-defaults-v2";
 const GENERIC={
  currentAge:45,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
  vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,roth2:0,roth3:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:50,voo2:30000,k2:30000,changeAge3:60,voo3:30000,k3:30000,
- high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,stepDownSpending:false,expenses80:300000,expenses90:275000,ordinaryTaxPct:20,dividendTaxPct:15,
+ high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,stepDownSpending:false,expenses80:300000,expenses90:275000,ordinaryTaxPct:20,dividendTaxPct:15,vooSaleTaxPct:10,
  moonlightIncome:0,moonlightThroughAge:70,
  fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",monteCarlo:false,startDate:"2018-12-01"
 };
 const LIMITS={
  currentAge:[18,90],spouseAge:[18,100],retirementAge:[19,100],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
  vooBalance:[0,1e11],k401Balance:[0,1e11],rothBalance:[0,1e11],rothContribution:[0,1e9],roth2:[0,1e9],roth3:[0,1e9],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
- voo2:[0,1e9],k2:[0,1e9],changeAge3:[18,100],voo3:[0,1e9],k3:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],expenses80:[0,1e8],expenses90:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],
+ voo2:[0,1e9],k2:[0,1e9],changeAge3:[18,100],voo3:[0,1e9],k3:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],expenses80:[0,1e8],expenses90:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],vooSaleTaxPct:[0,40],
  moonlightIncome:[0,1e8],moonlightThroughAge:[18,100],fixedPct:[0,20]
 };
 const $=id=>document.getElementById(id);
@@ -149,7 +149,7 @@ $("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.ste
 $("monteCarloMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.monteCarlo=b.dataset.mc==="on";savePlan();render()});
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:21,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:22,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -273,11 +273,18 @@ function retirementWithReturns(p,f,returns){
   const rothNeeded=Math.max(0,expenseTarget-spendable);
   const rothWd=Math.min(rothNeeded,availableRoth);spendable+=rothWd;
   const availableVooBeforeSale=Math.max(0,voo*(1+r)-divUsed+rmdReinvested);
-  const vooSaleNeeded=Math.max(0,expenseTarget-spendable);
-  const vooSale=Math.min(vooSaleNeeded,availableVooBeforeSale);spendable+=vooSale;
+  const vooSaleNetNeeded=Math.max(0,expenseTarget-spendable);
+  const vooSaleTaxRate=Math.max(0,Math.min(.40,s.vooSaleTaxPct/100));
+  const vooSaleNetFactor=Math.max(.01,1-vooSaleTaxRate);
+  const vooSaleGrossNeeded=vooSaleNetNeeded/vooSaleNetFactor;
+  const vooSale=Math.min(vooSaleGrossNeeded,availableVooBeforeSale);
+  const vooSaleTax=vooSale*vooSaleTaxRate;
+  const vooSaleNet=vooSale-vooSaleTax;
+  spendable+=vooSaleNet;
+  const totalTaxes=taxes+vooSaleTax;
   const afterTax=spendable,surplus=afterTax-expenseTarget;
   const endV=Math.max(0,availableVooBeforeSale-vooSale),endK=Math.max(0,availableK-wd401k),endRoth=Math.max(0,availableRoth-rothWd);
-  rows.push({age,spa,vooStart:voo,kStart:k,rothStart:roth,div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,plannedWd:planned401k,rmd,wd:wd401k,wd401k,rothWd,vooSale,rmdReinvested,gross:div+f.annual+ss+moonlight+wd401k,cashGross:divUsed+f.annual+ss+moonlight+wd401k+rothWd+vooSale,taxes,afterTax,expenses:expenseTarget,surplus,baseAfterTax:afterTaxBase,endV,endK,endRoth,endTotal:endV+endK+endRoth,required:target401k});
+  rows.push({age,spa,vooStart:voo,kStart:k,rothStart:roth,div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,plannedWd:planned401k,rmd,wd:wd401k,wd401k,rothWd,vooSale,vooSaleTax,vooSaleNet,rmdReinvested,gross:div+f.annual+ss+moonlight+wd401k+vooSale,cashGross:divUsed+f.annual+ss+moonlight+wd401k+rothWd+vooSale,taxes:totalTaxes,afterTax,expenses:expenseTarget,surplus,baseAfterTax:afterTaxBase,endV,endK,endRoth,endTotal:endV+endK+endRoth,required:target401k});
   voo=endV;k=endK;roth=endRoth;
  }
  return{rows};
@@ -401,7 +408,7 @@ function render(){
     :`VOO div used ${money(0)} · reinvested ${money(r.div)}`;
    const rmdText=r.rmd>0?` · RMD minimum ${money(r.rmd)}${r.rmdReinvested>0?` · excess RMD→VOO ${money(r.rmdReinvested)}`:""}`:"";
    const rothText=r.rothWd>0?` · Roth ${money(r.rothWd)}`:"";
-   const vooSaleText=r.vooSale>0?` · VOO sold ${money(r.vooSale)}`:"";
+   const vooSaleText=r.vooSale>0?` · VOO sold ${money(r.vooSale)} · est. VOO sale tax ${money(r.vooSaleTax||0)}`:"";
    return `<div class="stage"><div class="row"><div><div style="font-size:13px;font-weight:700">${stageTitle(r)}</div><div class="tiny">${range} · ${spouseRange}</div></div><div style="text-align:right"><div style="font-size:13px;font-weight:700">${money(r.afterTax)}/yr</div><div class="tiny">${money(r.afterTax/12)}/mo after tax</div></div></div><div class="tiny" style="margin-top:6px">${divText} · FERS ${money(r.fers)} · Moonlighting ${money(r.moonlight)} · SS ${money(r.ss)} · 401(k) ${money(r.wd)}${rothText}${vooSaleText}${rmdText}</div></div>`;
   }).join("")}
  draw(c);

@@ -165,6 +165,8 @@
    </div>
    <div class="field"><label>Estimated effective ordinary tax rate</label><div class="inputwrap"><input data-key="ordinaryTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Qualified dividend tax rate</label><div class="inputwrap"><input data-key="dividendTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+   <div class="field"><label>Estimated tax on VOO share sales</label><div class="inputwrap"><input data-key="vooSaleTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+   <div class="tiny" style="align-self:center">Planning shortcut: default 10% haircut on gross VOO sale proceeds. Actual tax applies only to realized gains, so this is an approximate blended tax estimate.</div>
    <div class="field"><label>Annual moonlighting income</label><div class="inputwrap"><span class="prefix">$</span><input data-key="moonlightIncome" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Moonlighting through your age</label><input data-key="moonlightThroughAge" type="text" inputmode="decimal"></div>
   </div>
@@ -172,7 +174,7 @@
   <div class="seg" id="mode"><button type="button" data-mode="need"><strong>Need-based</strong><span>Fill after-tax gap</span></button><button type="button" data-mode="fixed"><strong>Fixed rate</strong><span>Choose rate</span></button></div>
   <div id="fixedWrap" class="field" style="display:none;margin-top:12px"><label>Fixed withdrawal rate</label><div class="inputwrap"><input data-key="fixedPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
   <div class="soft" style="margin-top:12px"><div class="row"><span class="muted">Withdrawal order</span><strong>401(k) → Roth → VOO</strong></div><div class="tiny" style="margin-top:6px">RMDs begin automatically at age 75 using the IRS Uniform Lifetime Table. The app uses the larger of the planned 401(k) withdrawal or the RMD, then uses Roth IRA if the 401(k) cannot fill the spending gap, and finally sells VOO shares if needed. Any after-tax forced RMD excess above spending needs is reinvested into VOO.</div></div>
-  <div class="tiny" style="padding:12px 0 14px">Tax estimate is intentionally simple: FERS, moonlighting, and 401(k) withdrawals use the ordinary effective rate, qualified VOO dividends use the dividend rate, and 85% of Social Security is assumed taxable at the ordinary rate. All VOO dividends are taxed even when reinvested. Moonlighting is included through the selected age, inclusive.</div>
+  <div class="tiny" style="padding:12px 0 14px">Tax estimate is intentionally simple: FERS, moonlighting, and 401(k) withdrawals use the ordinary effective rate, qualified VOO dividends use the dividend rate, and 85% of Social Security is assumed taxable at the ordinary rate. VOO share sales use the separate estimated sale-tax haircut above. All VOO dividends are taxed even when reinvested. Moonlighting is included through the selected age, inclusive.</div>
  </details>
 
  <details>
@@ -212,10 +214,10 @@
   <p>Under current law, this plan models RMDs beginning at age 75 using the IRS Uniform Lifetime Table. Each year's RMD is based on the prior year-end 401(k) balance. The model assumes the first RMD is taken during the age-75 year rather than delayed to the following April. The actual 401(k) withdrawal is at least the RMD when sufficient 401(k) assets are available. If an RMD forces more after-tax cash out than is needed for spending, that excess is reinvested into VOO.</p>
   <p>FERS estimate uses high-3 × service years × 1.0%, or 1.1% at age 62+ with at least 20 years of service. If full FERS survivor election is on, the retiree annuity is reduced by 10%; the survivor benefit is 50% of the unreduced annuity. Detailed COLA rules are not modeled.</p>
   <p>Social Security uses 2026 maximum-benefit planning benchmarks: $2,969/month at 62 and $5,181/month at 70 per person. Actual future benefits may differ.</p>
-  <p>Taxes are only an approximation, not a tax return calculation. Medicare IRMAA, capital-gain realization and tax from VOO share sales, state taxes, and detailed Social Security taxation are not modeled. Therefore VOO share sales are treated as spendable proceeds dollar-for-dollar and may modestly overstate after-tax cash when embedded capital gains are present.</p>
+  <p>Taxes are only an approximation, not a tax return calculation. VOO share sales use the entered blended tax haircut on gross sale proceeds (10% by default) instead of tracking individual tax lots or cost basis. Actual capital-gains tax applies only to the realized-gain portion of a sale, so this shortcut can differ from the eventual tax bill. Medicare IRMAA, state taxes, and detailed Social Security taxation are not modeled.</p>
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=21"></script>
+<script src="retirement_app.js?v=22"></script>
 </body>
 </html>
