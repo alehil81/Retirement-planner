@@ -1,4 +1,4 @@
-Retirement Planner v17 — portfolio spending waterfall
+Retirement Planner v18 — scenario presets + step-down spending
 
 Replace only:
 - index.html
@@ -7,18 +7,18 @@ Replace only:
 
 Keep styles-v4.css unchanged.
 
-Withdrawal order:
-1. Traditional 401(k) first, including the RMD overlay from age 75.
-2. When 401(k) assets cannot fully cover the spending gap, Roth IRA is used next.
-   Roth withdrawals are modeled as tax-free qualified distributions.
-3. When Roth IRA is exhausted, VOO shares are sold to fill the remaining gap.
+Scenario presets change ONLY real return and inflation:
+- Base: 4.5% real / 2.5% inflation
+- Conservative: 4.0% real / 3.0% inflation
+- Stress: 3.0% real / 3.5% inflation
+- Strong-return: 5.5% real / 2.5% inflation
 
-The retirement-stage details now show Roth withdrawals and VOO share sales.
-VOO share sales reduce the VOO balance.
+Step-down spending:
+- OFF by default so existing plans remain unchanged.
+- When ON:
+  * retirement through age 79 = main annual after-tax expense input
+  * ages 80–89 = separate later-life input (default $300,000)
+  * age 90+ = separate later-life input (default $275,000)
+- All amounts are today's dollars.
 
-Important tax limitation:
-The calculator still does not track VOO tax basis, so capital-gain realization/tax
-from VOO sales is not modeled. VOO sale proceeds are treated dollar-for-dollar as
-spendable cash. This can modestly overstate after-tax cash when embedded gains exist.
-
-Everything else is unchanged from v16.
+All v17 RMD and 401(k) -> Roth -> VOO waterfall logic remains intact.

@@ -4,14 +4,14 @@ const DEFAULT_KEY="retirement-planner-personal-defaults-v2";
 const GENERIC={
  currentAge:45,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
  vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:55,voo2:30000,k2:30000,
- high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,ordinaryTaxPct:20,dividendTaxPct:15,
+ high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,stepDownSpending:false,expenses80:300000,expenses90:275000,ordinaryTaxPct:20,dividendTaxPct:15,
  moonlightIncome:0,moonlightThroughAge:70,
  fixedPct:3.5,userClaim:70,spouseClaim:70,mode:"need",startDate:"2018-12-01"
 };
 const LIMITS={
  currentAge:[18,90],spouseAge:[18,100],retirementAge:[19,100],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
  vooBalance:[0,1e11],k401Balance:[0,1e11],rothBalance:[0,1e11],rothContribution:[0,1e9],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
- voo2:[0,1e9],k2:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],
+ voo2:[0,1e9],k2:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],expenses80:[0,1e8],expenses90:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],
  moonlightIncome:[0,1e8],moonlightThroughAge:[18,100],fixedPct:[0,20]
 };
 const $=id=>document.getElementById(id);
@@ -83,9 +83,19 @@ $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{chartMode=b.datas
 
 $("saveDefaults").onclick=()=>{try{localStorage.setItem(DEFAULT_KEY,JSON.stringify(s));savePlan();$("saved").textContent="Saved as your local defaults"}catch(e){showWarning("Could not save local defaults in this browser.")}};
 $("printPlan").onclick=()=>window.print();
+const SCENARIOS={
+ base:{realReturnPct:4.5,inflationPct:2.5},
+ conservative:{realReturnPct:4.0,inflationPct:3.0},
+ stress:{realReturnPct:3.0,inflationPct:3.5},
+ strong:{realReturnPct:5.5,inflationPct:2.5}
+};
+$("scenarioPresets").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+ const p=SCENARIOS[b.dataset.scenario];s.realReturnPct=p.realReturnPct;s.inflationPct=p.inflationPct;syncInputs();savePlan();render();
+});
+$("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.stepDownSpending=b.dataset.stepdown==="on";savePlan();render()});
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base={...GENERIC,...JSON.parse(d)}}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:17,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:18,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s={...GENERIC,...plan};syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -148,10 +158,17 @@ function taxesFor(totalDiv,fersIncome,ss,moonlight,wd){
  const ord=s.ordinaryTaxPct/100,divTax=s.dividendTaxPct/100;
  return totalDiv*divTax+(fersIncome+moonlight+ss*.85+wd)*ord;
 }
+function spendingForAge(age){
+ if(!s.stepDownSpending)return s.expenses;
+ if(age>=90)return s.expenses90;
+ if(age>=80)return s.expenses80;
+ return s.expenses;
+}
 function retirement(p,f){
  const r=s.realReturnPct/100,start=Math.ceil(s.retirementAge);
  let voo=p.v,k=p.k,roth=p.roth;const rows=[];
  for(let age=start;age<=95;age++){
+  const expenseTarget=spendingForAge(age);
   const spa=s.spouseAge+(age-s.currentAge);
   const u=age>=s.userClaim?ssAnnual(s.userClaim):0;
   const sp=spa>=s.spouseClaim?ssAnnual(s.spouseClaim):0;
@@ -168,7 +185,7 @@ function retirement(p,f){
   const ordNet=Math.max(.01,1-s.ordinaryTaxPct/100);
 
   // First basket: traditional 401(k), with the RMD minimum overlaid from age 75.
-  const planned401k=s.mode==="fixed"?k*s.fixedPct/100:Math.max(0,(s.expenses-afterTaxBase)/ordNet);
+  const planned401k=s.mode==="fixed"?k*s.fixedPct/100:Math.max(0,(expenseTarget-afterTaxBase)/ordNet);
   const rmd=rmdForAge(age,k);
   const target401k=Math.max(planned401k,rmd);
   const availableK=Math.max(0,k*(1+r));
@@ -180,24 +197,24 @@ function retirement(p,f){
   // Reinvest only genuine after-tax forced RMD excess.
   const forcedRmdGross=rmd>planned401k?Math.max(0,wd401k-planned401k):0;
   const forcedRmdNet=forcedRmdGross*ordNet;
-  const rmdReinvested=Math.max(0,Math.min(forcedRmdNet,cashAfter401k-s.expenses));
+  const rmdReinvested=Math.max(0,Math.min(forcedRmdNet,cashAfter401k-expenseTarget));
 
   let spendable=cashAfter401k-rmdReinvested;
 
   // Second basket: Roth IRA. Qualified distributions are modeled tax-free.
   const availableRoth=Math.max(0,roth*(1+r));
-  const rothNeeded=Math.max(0,s.expenses-spendable);
+  const rothNeeded=Math.max(0,expenseTarget-spendable);
   const rothWd=Math.min(rothNeeded,availableRoth);
   spendable+=rothWd;
 
   // Third basket: VOO share sales. Capital-gain tax on sales is not modeled.
   const availableVooBeforeSale=Math.max(0,voo*(1+r)-divUsed+rmdReinvested);
-  const vooSaleNeeded=Math.max(0,s.expenses-spendable);
+  const vooSaleNeeded=Math.max(0,expenseTarget-spendable);
   const vooSale=Math.min(vooSaleNeeded,availableVooBeforeSale);
   spendable+=vooSale;
 
   const afterTax=spendable;
-  const surplus=afterTax-s.expenses;
+  const surplus=afterTax-expenseTarget;
   const endV=Math.max(0,availableVooBeforeSale-vooSale);
   const endK=Math.max(0,availableK-wd401k);
   const endRoth=Math.max(0,availableRoth-rothWd);
@@ -210,7 +227,7 @@ function retirement(p,f){
    age,spa,vooStart:voo,kStart:k,rothStart:roth,
    div,divUsed,divReinvested,fers:f.annual,u,sp,ss,moonlight,
    plannedWd:planned401k,rmd,wd:wd401k,wd401k,rothWd,vooSale,rmdReinvested,
-   gross:taxableGross,cashGross,taxes,afterTax,expenses:s.expenses,surplus,
+   gross:taxableGross,cashGross,taxes,afterTax,expenses:expenseTarget,surplus,
    baseAfterTax:afterTaxBase,endV,endK,endRoth,endTotal:endV+endK+endRoth,
    required:target401k
   });
@@ -221,7 +238,7 @@ function retirement(p,f){
 function groupStages(rows){
  const stages=[];
  for(const row of rows){
-  const key=[row.u>0?1:0,row.sp>0?1:0,row.moonlight>0?1:0,row.rmd>0?1:0,row.rothWd>0?1:0,row.vooSale>0?1:0].join("-");
+  const key=[row.u>0?1:0,row.sp>0?1:0,row.moonlight>0?1:0,row.rmd>0?1:0,row.rothWd>0?1:0,row.vooSale>0?1:0,Math.round(row.expenses)].join("-");
   const prev=stages.at(-1);
   if(!prev||prev.key!==key)stages.push({key,start:row.age,end:row.age,startRow:row,endRow:row});
   else{prev.end=row.age;prev.endRow=row}
@@ -268,11 +285,14 @@ function render(){
  $("userClaimCustom").value=(s.userClaim===62||s.userClaim===70)?"":String(s.userClaim);
  $("spouseClaimCustom").value=(s.spouseClaim===62||s.spouseClaim===70)?"":String(s.spouseClaim);
  $("fersSurvivor").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.fersSurvivor==="on")===!!s.fersFullSurvivor));
+ $("stepDownSpending").querySelectorAll("button").forEach(x=>x.classList.toggle("active",(x.dataset.stepdown==="on")===!!s.stepDownSpending));
+ const stepFields=$("stepDownFields");if(stepFields){stepFields.style.opacity=s.stepDownSpending?"1":".45";stepFields.querySelectorAll("input").forEach(x=>x.disabled=!s.stepDownSpending)}
+ $("scenarioPresets").querySelectorAll("button").forEach(x=>{const p=SCENARIOS[x.dataset.scenario];x.classList.toggle("active",Math.abs(s.realReturnPct-p.realReturnPct)<.001&&Math.abs(s.inflationPct-p.inflationPct)<.001)});
  $("userBenefit").textContent="Claim "+s.userClaim+" · "+money(ssAnnual(s.userClaim)/12)+"/mo · "+money(ssAnnual(s.userClaim))+"/yr";
  $("spouseBenefit").textContent="Claim "+s.spouseClaim+" · "+money(ssAnnual(s.spouseClaim)/12)+"/mo · "+money(ssAnnual(s.spouseClaim))+"/yr";
  $("mode").querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset.mode===s.mode));$("fixedWrap").style.display=s.mode==="fixed"?"block":"none";
 
- $("income").textContent=money(b.afterTax)+"/yr";$("incomeMo").textContent=`Age ${b.age} · ${money(b.afterTax/12)}/mo after estimated tax`;$("expenseOut").textContent=money(s.expenses)+"/yr";
+ $("income").textContent=money(b.afterTax)+"/yr";$("incomeMo").textContent=`Age ${b.age} · ${money(b.afterTax/12)}/mo after estimated tax`;$("expenseOut").textContent=money(b.expenses)+"/yr";
  $("surplus").textContent=(b.surplus>=0?"+":"−")+money(Math.abs(b.surplus))+"/yr";$("surplus").className="metric-sm "+(b.surplus>=0?"green":"red");
 
  $("pre401").textContent=money(b.baseAfterTax)+"/yr";
@@ -281,7 +301,7 @@ function render(){
   :`no VOO dividends used`;
  $("preDetail").textContent=`After-tax cash from ${divPhrase} + FERS + Social Security${b.moonlight>0?" + moonlighting":""}, before 401(k); tax includes all VOO dividends`;
 
- const cov=s.expenses?b.baseAfterTax/s.expenses*100:100;$("coverage").style.width=Math.min(100,Math.max(0,cov))+"%";$("coverageText").textContent=cov.toFixed(1)+"% of after-tax expenses covered before 401(k)";
+ const cov=b.expenses?b.baseAfterTax/b.expenses*100:100;$("coverage").style.width=Math.min(100,Math.max(0,cov))+"%";$("coverageText").textContent=cov.toFixed(1)+"% of after-tax expenses covered before 401(k)";
  
  $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross modeled income (includes reinvested dividends)";
 

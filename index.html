@@ -40,6 +40,17 @@
  <div id="warning" class="warning"></div>
 </section>
 
+<section class="panel">
+ <div class="row"><h2 style="margin:0;font-size:18px">Scenario presets</h2><span class="muted">Return + inflation only</span></div>
+ <div class="seg" id="scenarioPresets" style="margin-top:12px;grid-template-columns:repeat(2,minmax(0,1fr))">
+  <button type="button" data-scenario="base"><strong>Base</strong><span>4.5% real · 2.5% inflation</span></button>
+  <button type="button" data-scenario="conservative"><strong>Conservative</strong><span>4.0% real · 3.0% inflation</span></button>
+  <button type="button" data-scenario="stress"><strong>Stress</strong><span>3.0% real · 3.5% inflation</span></button>
+  <button type="button" data-scenario="strong"><strong>Strong-return</strong><span>5.5% real · 2.5% inflation</span></button>
+ </div>
+ <div class="tiny" style="margin-top:10px">Presets change only the real-return and inflation assumptions. All other inputs stay unchanged.</div>
+</section>
+
 <section class="kpis">
  <div class="panel"><div class="tiny">COMBINED AT RETIREMENT</div><div id="combined" class="metric">—</div><div id="nominal" class="muted">—</div></div>
  <div class="panel"><div class="tiny">VOO AT RETIREMENT</div><div id="vooOut" class="metric">—</div><div id="vooSub" class="muted">—</div></div>
@@ -110,6 +121,15 @@
    <div class="field"><label>Use VOO dividends for spending</label><div class="seg" id="divUseMode"><button type="button" data-div-use="on"><strong>On</strong><span>Use selected %</span></button><button type="button" data-div-use="off"><strong>Off</strong><span>Reinvest all</span></button></div></div>
    <div class="field" id="divPctField"><label>VOO dividends used for spending</label><div class="inputwrap"><input data-key="vooDividendUsePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Annual after-tax expenses (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="expenses" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+   <div class="field"><label>Step-down spending</label><div class="seg" id="stepDownSpending"><button type="button" data-stepdown="on"><strong>On</strong><span>Lower later-life spending</span></button><button type="button" data-stepdown="off"><strong>Off</strong><span>Same real spending for life</span></button></div></div>
+   <div id="stepDownFields" class="soft" style="grid-column:1/-1">
+    <div class="row" style="margin-bottom:10px"><strong>Later-life spending (today's $)</strong><span class="muted">When step-down is on</span></div>
+    <div class="fields">
+     <div class="field"><label>Ages 80–89</label><div class="inputwrap"><span class="prefix">$</span><input data-key="expenses80" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+     <div class="field"><label>Age 90+</label><div class="inputwrap"><span class="prefix">$</span><input data-key="expenses90" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
+    </div>
+    <div class="tiny" style="margin-top:8px">Retirement through age 79 uses the main annual after-tax expense input above.</div>
+   </div>
    <div class="field"><label>Estimated effective ordinary tax rate</label><div class="inputwrap"><input data-key="ordinaryTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Qualified dividend tax rate</label><div class="inputwrap"><input data-key="dividendTaxPct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
    <div class="field"><label>Annual moonlighting income</label><div class="inputwrap"><span class="prefix">$</span><input data-key="moonlightIncome" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
@@ -153,6 +173,8 @@
   <p>Accumulation and retirement projections are deterministic, not Monte Carlo. The selected real return is applied every year, so sequence-of-returns risk is not modeled. Roth IRA contributions are entered in today's dollars through retirement; the Roth IRA is then left invested with no retirement withdrawals in this model.</p>
   <p>Contribution escalation is applied separately to VOO and 401(k). Each phase begins at its entered base contribution and escalates annually thereafter.</p>
   <p>During retirement, the selected percentage of VOO dividends is available for spending and the remainder is reinvested. Because the real-return assumption is a total return, VOO ending balance is modeled as beginning balance × (1 + real total return) minus only the dividends actually used for spending. All dividends remain taxable whether used or reinvested. 401(k) ending balance is beginning balance × (1 + real return) minus withdrawals.</p>
+  <p>Scenario presets are convenience controls only: they change the real-return and inflation inputs and leave all other plan assumptions untouched.</p>
+  <p>When step-down spending is enabled, the main annual after-tax expense input applies through age 79, the age-80 amount applies from ages 80–89, and the age-90 amount applies from age 90 onward. All spending inputs are expressed in today’s dollars.</p>
   <p>Need-based withdrawals use a spending waterfall. The calculator first draws from the traditional 401(k), subject to the available balance and the RMD minimum. If the 401(k) cannot fully cover the estimated after-tax spending gap, the remaining gap is filled from Roth IRA withdrawals, which are modeled as tax-free qualified distributions. If the Roth IRA is also exhausted, the calculator sells VOO shares to fill the remaining spending gap. Optional moonlighting income is included through the selected age and reduces portfolio withdrawals during those years.</p>
   <p>Under current law, this plan models RMDs beginning at age 75 using the IRS Uniform Lifetime Table. Each year's RMD is based on the prior year-end 401(k) balance. The model assumes the first RMD is taken during the age-75 year rather than delayed to the following April. The actual 401(k) withdrawal is at least the RMD when sufficient 401(k) assets are available. If an RMD forces more after-tax cash out than is needed for spending, that excess is reinvested into VOO.</p>
   <p>FERS estimate uses high-3 × service years × 1.0%, or 1.1% at age 62+ with at least 20 years of service. If full FERS survivor election is on, the retiree annuity is reduced by 10%; the survivor benefit is 50% of the unreduced annuity. Detailed COLA rules are not modeled.</p>
@@ -161,6 +183,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=17"></script>
+<script src="retirement_app.js?v=18"></script>
 </body>
 </html>
