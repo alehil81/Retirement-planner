@@ -3,14 +3,14 @@ const PLAN_KEY="retirement-planner-standalone-v1";
 const DEFAULT_KEY="retirement-planner-personal-defaults-v2";
 const GENERIC={
  currentAge:45,birthYear:1981,spouseAge:43,retirementAge:65,targetPortfolio:5000000,inflationPct:2.5,realReturnPct:5,
- vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,roth2:0,roth3:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,changeAge:50,voo2:30000,k2:30000,changeAge3:60,voo3:30000,k3:30000,
+ vooBalance:500000,k401Balance:500000,rothBalance:0,rothContribution:0,roth2:0,roth3:0,voo1:50000,k1:30000,vooIncreasePct:0,kIncreasePct:0,rothIncreasePct:2.5,changeAge:50,voo2:30000,k2:30000,changeAge3:60,voo3:30000,k3:30000,
  high3:200000,fersFullSurvivor:false,divYield:1.3,useVooDividends:true,vooDividendUsePct:100,expenses:150000,stepDownSpending:false,expenses80:300000,expenses90:275000,ordinaryTaxPct:20,dividendTaxPct:15,vooSaleTaxPct:10,
  moonlightIncome:0,moonlightThroughAge:70,
  fixedPct:3.5,userClaim:70,spouseClaim:70,userFraMonthly:4152,spouseFraMonthly:4152,mode:"need",monteCarlo:false,startDate:"2018-12-01"
 };
 const LIMITS={
  currentAge:[18,90],birthYear:[1900,2100],spouseAge:[18,100],retirementAge:[19,95],targetPortfolio:[0,1e11],inflationPct:[0,20],realReturnPct:[-10,20],
- vooBalance:[0,1e11],k401Balance:[0,1e11],rothBalance:[0,1e11],rothContribution:[0,1e9],roth2:[0,1e9],roth3:[0,1e9],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],changeAge:[18,100],
+ vooBalance:[0,1e11],k401Balance:[0,1e11],rothBalance:[0,1e11],rothContribution:[0,1e9],roth2:[0,1e9],roth3:[0,1e9],voo1:[0,1e9],k1:[0,1e9],vooIncreasePct:[-100,50],kIncreasePct:[-100,50],rothIncreasePct:[-100,50],changeAge:[18,100],
  voo2:[0,1e9],k2:[0,1e9],changeAge3:[18,100],voo3:[0,1e9],k3:[0,1e9],high3:[0,1e7],divYield:[0,15],vooDividendUsePct:[0,100],expenses:[0,1e8],expenses80:[0,1e8],expenses90:[0,1e8],ordinaryTaxPct:[0,60],dividendTaxPct:[0,40],vooSaleTaxPct:[0,40],
  moonlightIncome:[0,1e8],moonlightThroughAge:[18,100],fixedPct:[0,20],userFraMonthly:[0,50000],spouseFraMonthly:[0,50000]
 };
@@ -33,6 +33,7 @@ function migratePlan(raw){
  if(raw){
   if(raw.roth2==null)p.roth2=Math.max(0,Number(raw.rothContribution??p.rothContribution)||0);
   if(raw.roth3==null)p.roth3=Math.max(0,Number(raw.rothContribution??p.rothContribution)||0);
+  if(raw.rothIncreasePct==null)p.rothIncreasePct=Number(raw.inflationPct??p.inflationPct)||0;
 
   // New Phase 3 defaults to age 60. For an older saved 2-phase plan,
   // derive the new Phase 3 VOO/401(k) base from what the old schedule
@@ -157,7 +158,7 @@ $("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.ste
 $("monteCarloMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.monteCarlo=b.dataset.mc==="on";savePlan();render()});
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base=migratePlan(JSON.parse(d))}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:23,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:26,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s=migratePlan(plan);syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -176,10 +177,7 @@ function contribAt(age,kind){
  else if(kind==="k")base=phase===1?s.k1:phase===2?s.k2:s.k3;
  else base=phase===1?s.rothContribution:phase===2?s.roth2:s.roth3;
 
- // Roth phase inputs are already constant today's-dollar amounts.
- if(kind==="roth")return Math.max(0,base);
-
- const nominalPct=kind==="voo"?s.vooIncreasePct:s.kIncreasePct;
+ const nominalPct=kind==="voo"?s.vooIncreasePct:kind==="k"?s.kIncreasePct:s.rothIncreasePct;
  const inc=realContributionIncrease(nominalPct);
  const n=Math.max(0,Math.floor(age-startAge));
  return Math.max(0,base*Math.pow(1+inc,n));
@@ -370,8 +368,8 @@ function render(){
 
  const growthNote=$("contributionGrowthNote");
  if(growthNote){
-  const vr=realContributionIncrease(s.vooIncreasePct)*100,kr=realContributionIncrease(s.kIncreasePct)*100;
-  growthNote.textContent=`To keep contributions approximately flat in today's dollars, set the nominal increase about equal to inflation; with ${s.inflationPct.toFixed(2)}% inflation, use about ${s.inflationPct.toFixed(2)}%. Current real contribution growth within each VOO/401(k) phase: VOO ${vr.toFixed(2)}%/yr · 401(k) ${kr.toFixed(2)}%/yr.`;
+  const vr=realContributionIncrease(s.vooIncreasePct)*100,kr=realContributionIncrease(s.kIncreasePct)*100,rr=realContributionIncrease(s.rothIncreasePct)*100;
+  growthNote.textContent=`To keep a contribution approximately flat in today's dollars, set its nominal increase about equal to inflation; with ${s.inflationPct.toFixed(2)}% inflation, use about ${s.inflationPct.toFixed(2)}%. Current real contribution growth: VOO ${vr.toFixed(2)}%/yr · 401(k) ${kr.toFixed(2)}%/yr · Roth ${rr.toFixed(2)}%/yr.`;
  }
 
  syncDividendControls();

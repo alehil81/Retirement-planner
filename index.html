@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles-v4.css?v=8">
+<link rel="stylesheet" href="styles-v4.css?v=9">
 <title>Retirement Planner</title>
 
 <style id="printStyles">
@@ -110,6 +110,21 @@
   </div>
  </div>
 
+ <div class="input-section contribution-growth-section">
+  <div class="input-section-header">
+   <div>
+    <div class="input-section-title">Contribution annual increases</div>
+    <div class="input-section-subtitle">Nominal increase assumptions applied to VOO, 401(k), and Roth IRA in all three contribution phases.</div>
+   </div>
+   <span class="section-chip">Applies to phases 1–3</span>
+  </div>
+  <div class="growth-fields">
+   <div class="field"><label>VOO nominal increase</label><div class="inputwrap"><input data-key="vooIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+   <div class="field"><label>401(k) nominal increase</label><div class="inputwrap"><input data-key="kIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+   <div class="field"><label>Roth IRA nominal increase</label><div class="inputwrap"><input data-key="rothIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
+  </div>
+ </div>
+
  <div class="input-section">
   <div class="input-section-header">
    <div>
@@ -122,8 +137,6 @@
    <div class="field"><label>VOO / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="voo1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>401(k) / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="k1" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
    <div class="field"><label>Roth IRA / yr (today's $)</label><div class="inputwrap"><span class="prefix">$</span><input data-key="rothContribution" data-money="1" class="moneyinput" type="text" inputmode="decimal"></div></div>
-   <div class="field"><label>VOO annual increase (nominal)</label><div class="inputwrap"><input data-key="vooIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
-   <div class="field"><label>401(k) annual increase (nominal)</label><div class="inputwrap"><input data-key="kIncreasePct" class="suffixinput" type="text" inputmode="decimal"><span class="suffix">%</span></div></div>
   </div>
  </div>
 
@@ -162,7 +175,7 @@
  <details class="note-disclosure">
   <summary><span>Contribution notes</span><span class="muted">Tap to expand</span></summary>
   <div class="note-body">
-   <div class="tiny">Contribution dollar inputs are in today's dollars. Phase 2 and Phase 3 start ages are editable. VOO and 401(k) increase rates are nominal; the app converts them to real growth using inflation before compounding within each phase. Roth IRA phase amounts are treated as constant real (today's-dollar) contributions within each phase. <span id="contributionGrowthNote"></span> Each new phase restarts from its entered base amount.</div>
+   <div class="tiny">Contribution dollar inputs are in today's dollars. Phase 2 and Phase 3 start ages are editable. The VOO, 401(k), and Roth IRA nominal annual-increase assumptions above apply to all three phases; the app converts each one to real contribution growth using inflation. <span id="contributionGrowthNote"></span> Each new phase restarts from its entered base amount, then that basket's annual increase resumes.</div>
   </div>
  </details>
 </div>
@@ -269,7 +282,7 @@
  <summary><span>Assumptions & methodology</span><span class="muted">Details</span></summary>
  <div class="muted" style="padding-top:8px">
   <p>The main projection remains deterministic: the selected real return is applied every year. When Monte Carlo sequence risk is turned on, a separate risk analysis runs 2,000 simulated annual real-return sequences from the current age through 95. It uses the selected real return as the compound-return center, assumes 16% annual real-return volatility, and applies the same annual market return to VOO, 401(k), and Roth IRA. The Monte Carlo success rate means the modeled after-tax spending target is fully funded through age 95. Roth IRA contributions are entered in today's dollars until retirement; during retirement, Roth remains the second spending basket after the 401(k).</p>
-  <p>Contribution escalation is applied separately to VOO and 401(k). Each phase begins at its entered base contribution and escalates annually thereafter.</p>
+  <p>Contribution escalation is applied separately to VOO, 401(k), and Roth IRA using the three nominal annual-increase assumptions in the contribution section. The same basket-specific increase applies in all three phases. Each phase begins at its entered base contribution and then escalates annually thereafter.</p>
   <p>During retirement, the selected percentage of VOO dividends is available for spending and the remainder is reinvested. Because the real-return assumption is a total return, VOO ending balance is modeled as beginning balance × (1 + real total return) minus only the dividends actually used for spending. All dividends remain taxable whether used or reinvested. 401(k) ending balance is beginning balance × (1 + real return) minus withdrawals.</p>
   <p>Scenario presets are convenience controls only: they change the real-return and inflation inputs and leave all other plan assumptions untouched.</p>
   <p>When step-down spending is enabled, the main annual after-tax expense input applies through age 79, the age-80 amount applies from ages 80–89, and the age-90 amount applies from age 90 onward. All spending inputs are expressed in today’s dollars.</p>
@@ -281,6 +294,6 @@
  </div>
 </details>
 </div>
-<script src="retirement_app.js?v=23"></script>
+<script src="retirement_app.js?v=26"></script>
 </body>
 </html>

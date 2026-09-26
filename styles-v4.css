@@ -214,3 +214,21 @@ label{line-height:1.25}
   .prefix{left:10px}
   .suffix{right:10px}
 }
+
+
+/* === v26 contribution growth box === */
+.growth-fields{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.contribution-growth-section .field label{
+  min-height:2.8em;
+}
+@media(max-width:560px){
+  .growth-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .contribution-growth-section{padding:11px}
+  .contribution-growth-section .field label{font-size:11px;line-height:1.25}
+  .contribution-growth-section input[type=text]{padding-left:9px;padding-right:26px!important}
+  .contribution-growth-section .suffix{right:9px}
+}

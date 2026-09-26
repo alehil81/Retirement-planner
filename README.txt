@@ -1,18 +1,19 @@
-Retirement Planner v25 — polished layout (supersedes earlier v25 build)
+Retirement Planner v26 — shared contribution annual-increase assumptions
 
-Replace:
-- index.html
-- styles-v4.css
-- sw.js
+New contribution-growth section:
+- A separate rectangular "Contribution annual increases" section now contains:
+  * VOO nominal increase
+  * 401(k) nominal increase
+  * Roth IRA nominal increase
+- Each of these three editable nominal increase assumptions applies to the
+  corresponding investment basket in ALL three contribution phases.
+- Each new phase still restarts from that phase's entered base contribution;
+  the same annual increase then resumes from the new base.
 
-retirement_app.js is included and unchanged from the prior v25/v23 logic.
+Roth change:
+- Roth IRA contributions now support their own nominal annual increase.
+- Existing saved plans are migrated with Roth nominal increase set equal to
+  their inflation assumption, preserving the old behavior of approximately
+  flat real Roth contributions.
 
-Visual-only changes in this updated v25:
-1. Core assumptions and Starting balances are tighter and more compact.
-2. Contribution labels are shortened to reduce wrapping and improve 2-column alignment.
-3. Social Security reset control is smaller and relabeled “Reset to 2026 benchmark.”
-4. Mobile plan/contribution fields remain in a compact 2-column layout where practical.
-5. Social Security cards remain stacked cleanly on narrow screens.
-6. Expandable contribution, Social Security, and VOO tax notes remain intact.
-
-No calculation logic changed.
+Everything else remains unchanged from the updated v25 build.
