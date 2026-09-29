@@ -1,8 +1,8 @@
-const CACHE = "retirement-planner-v27-polished";
+const CACHE = "retirement-planner-v28-polished";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles-v4.css?v=11",
+  "./styles-v4.css?v=12",
   "./retirement_app.js?v=27",
   "./manifest.json",
   "./icon.svg",
