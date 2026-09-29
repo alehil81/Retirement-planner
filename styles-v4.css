@@ -267,3 +267,55 @@ label{line-height:1.25}
     font-size:16px !important;
   }
 }
+
+
+/* === v29 collapsible Scenario presets + Retirement income stages === */
+
+/* Match the spacing used between the rest of the top-level cards. */
+.app > .scenario-panel{
+  margin-top:14px !important;
+}
+
+.section-disclosure{
+  overflow:hidden;
+}
+.section-disclosure-summary{
+  min-height:46px;
+  gap:12px;
+}
+.section-disclosure-title{
+  font-size:18px;
+  font-weight:700;
+}
+.section-disclosure-meta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-left:auto;
+  min-width:0;
+}
+.collapse-hint{
+  color:var(--muted);
+  font-size:11px;
+  font-weight:600;
+  white-space:nowrap;
+}
+.section-disclosure[open] > .section-disclosure-summary .collapse-hint{
+  font-size:0;
+}
+.section-disclosure[open] > .section-disclosure-summary .collapse-hint::before{
+  content:"Tap to hide";
+  font-size:11px;
+}
+.section-disclosure-body{
+  padding-top:8px;
+}
+.income-stages-panel .section-disclosure-title{
+  font-size:14px;
+}
+
+@media(max-width:780px){
+  .section-disclosure-meta{
+    gap:6px;
+  }
+}

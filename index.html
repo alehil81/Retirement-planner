@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles-v4.css?v=12">
+<link rel="stylesheet" href="styles-v4.css?v=13">
 <title>Retirement Planner</title>
 
 <style id="printStyles">
@@ -40,8 +40,12 @@
  <div id="warning" class="warning"></div>
 </section>
 
-<section class="panel">
- <div class="row"><h2 style="margin:0;font-size:18px">Scenario presets</h2><span class="muted">Return + inflation only</span></div>
+<details class="panel scenario-panel section-disclosure">
+ <summary class="section-disclosure-summary">
+  <span class="section-disclosure-title">Scenario presets</span>
+  <span class="section-disclosure-meta"><span class="muted">Return + inflation only</span><span class="collapse-hint">Tap to expand</span></span>
+ </summary>
+ <div class="section-disclosure-body">
  <div class="seg" id="scenarioPresets" style="margin-top:12px;grid-template-columns:repeat(2,minmax(0,1fr))">
   <button type="button" data-scenario="base"><strong>Base</strong><span>4.5% real · 2.5% inflation</span></button>
   <button type="button" data-scenario="conservative"><strong>Conservative</strong><span>4.0% real · 3.0% inflation</span></button>
@@ -64,7 +68,8 @@
    <div class="tiny" style="margin-top:10px">Monte Carlo uses the selected real return as the compound-return center, 16% annual real-return volatility, and the same annual return shock across VOO, 401(k), and Roth IRA. Results are stable between refreshes and are planning estimates, not forecasts.</div>
   </div>
  </div>
-</section>
+ </div>
+</details>
 
 <section class="kpis">
  <div class="panel"><div class="tiny">COMBINED AT RETIREMENT</div><div id="combined" class="metric">—</div><div id="nominal" class="muted">—</div></div>
@@ -267,7 +272,16 @@
  <div class="panel"><div class="tiny">FIRST YEAR BOTH SS BENEFITS ACTIVE</div><div id="income" class="metric">—</div><div id="incomeMo" class="muted">—</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><div class="soft"><div class="tiny">AFTER-TAX EXPENSES</div><div id="expenseOut" class="metric-sm">—</div></div><div class="soft"><div class="tiny">SURPLUS / SHORTFALL</div><div id="surplus" class="metric-sm">—</div></div></div></div>
  <div class="panel"><div class="tiny">INCOME BEFORE 401(K)</div><div id="pre401" class="metric">—</div><div id="preDetail" class="muted">—</div><div class="bar" style="margin-top:10px"><span id="coverage"></span></div><div id="coverageText" class="tiny" style="margin-top:6px">—</div></div>
  <div class="panel"><div class="tiny">ESTIMATED TAXES</div><div id="taxesOut" class="metric">—</div><div id="grossIncomeOut" class="muted">—</div></div>
- <div class="panel"><div style="font-size:14px;font-weight:700">Retirement income stages</div><div class="tiny" style="margin-top:3px">Automatically changes when moonlighting, either Social Security benefit, RMDs, Roth withdrawals, or VOO sales start or stop.</div><div id="incomeStages" style="margin-top:6px"></div></div>
+ <details class="panel section-disclosure income-stages-panel">
+  <summary class="section-disclosure-summary">
+   <span class="section-disclosure-title">Retirement income stages</span>
+   <span class="collapse-hint">Tap to expand</span>
+  </summary>
+  <div class="section-disclosure-body">
+   <div class="tiny">Automatically changes when moonlighting, either Social Security benefit, RMDs, Roth withdrawals, or VOO sales start or stop.</div>
+   <div id="incomeStages" style="margin-top:6px"></div>
+  </div>
+ </details>
  <div class="panel"><div style="font-size:14px;font-weight:700">Retirement balance milestones</div><div id="milestones" class="milestones"></div></div>
 </div>
 </section>
