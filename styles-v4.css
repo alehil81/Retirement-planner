@@ -319,3 +319,28 @@ label{line-height:1.25}
     gap:6px;
   }
 }
+
+
+/* === v30 unified top retirement milestones === */
+.top-balance-milestones{
+  margin-top:14px;
+}
+.top-milestones-title{
+  font-size:18px;
+  font-weight:700;
+}
+.retirement-milestones-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.retirement-milestones-grid .milestone{
+  padding:12px;
+}
+.retirement-milestones-grid .metric-sm{
+  margin-top:3px;
+}
+@media(max-width:780px){
+  .retirement-milestones-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}

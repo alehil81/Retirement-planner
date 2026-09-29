@@ -1,20 +1,28 @@
-Retirement Planner v29 — collapsible sections
+Retirement Planner v30 — unified top retirement milestones
 
-Changes from v28:
-- Scenario presets is collapsed by default.
-  - Tap the heading to show the scenario presets and Monte Carlo controls/results.
-  - Tap again to hide them.
-- Retirement income stages is collapsed by default.
-  - Tap the heading to show the detailed retirement-stage breakdown.
-  - Tap again to hide it.
-- Added a 14px gap between the Retirement Planner header card and Scenario presets
-  so the two top cards no longer touch.
-- No calculation logic changed.
-- The v28 iPhone input-focus zoom fix is preserved.
+Changes from v29:
+- Replaced the separate top KPI cards with one Retirement balance milestones panel
+  immediately below Scenario presets.
+- Milestones now show:
+  * Age 70
+  * Age 75
+  * Age 80
+  * Age 85
+  * Age 90
+  * Age 95
+- Each milestone continues to display:
+  * Total portfolio
+  * VOO
+  * 401(k)
+  * Roth IRA
+- Removed the duplicate Retirement balance milestones panel from the lower right
+  side of the app.
+- Desktop uses 3 milestone cards per row; mobile uses 2 per row.
+- v28 iPhone input-focus zoom fix and v29 collapsible sections are preserved.
+- No retirement projection calculations changed.
 
 Replace on GitHub Pages:
 - index.html
 - styles-v4.css
+- retirement_app.js
 - sw.js
-
-retirement_app.js is unchanged but included.
