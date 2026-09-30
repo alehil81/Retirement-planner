@@ -1,19 +1,20 @@
-Retirement Planner v32 — updated scenario presets
+Retirement Planner v33 — nominal values on milestone cards
 
-New preset assumptions:
-- Stress: 2.5% real return / 3.5% inflation
-- Conservative: 3.5% real return / 3.0% inflation
-- Base: 4.5% real return / 2.5% inflation
-- Strong-return: 6.0% real return / 2.5% inflation
-
-Only the Scenario preset definitions and displayed preset labels changed.
-Existing plan inputs are not overwritten unless the user taps a preset.
-All retirement calculations, milestone logic, Monte Carlo settings, and other UI
-behavior are unchanged.
+Changes from v32:
+- Every retirement milestone card now shows:
+  * projected portfolio in today's dollars (existing main value)
+  * nominal future-dollar equivalent at that age
+  * existing VOO + 401(k) + Roth IRA breakdown
+- The At retirement card also shows its nominal future-dollar equivalent.
+- The Goal portfolio achieved card shows the portfolio in today's dollars and
+  its nominal equivalent at the age the goal is reached.
+- Nominal values are derived from the app's inflation assumption:
+    nominal = today's-dollar value × (1 + inflation)^(age - current age)
+- No retirement projection math changed.
+- v32 scenario presets are preserved.
 
 Replace on GitHub Pages:
 - index.html
+- styles-v4.css
 - retirement_app.js
 - sw.js
-
-styles-v4.css is unchanged but included in the ZIP.

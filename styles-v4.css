@@ -350,3 +350,12 @@ label{line-height:1.25}
 .retirement-milestones-grid .milestone-summary-card{
   border:1px solid var(--border);
 }
+
+
+/* === v33 nominal milestone equivalents === */
+.retirement-milestones-grid .milestone-nominal{
+  margin-top:2px;
+  margin-bottom:2px;
+  color:var(--muted);
+  font-weight:600;
+}
