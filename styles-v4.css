@@ -344,3 +344,9 @@ label{line-height:1.25}
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+
+/* === v31 milestone summary cards === */
+.retirement-milestones-grid .milestone-summary-card{
+  border:1px solid var(--border);
+}

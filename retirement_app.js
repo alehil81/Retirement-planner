@@ -158,7 +158,7 @@ $("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.ste
 $("monteCarloMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.monteCarlo=b.dataset.mc==="on";savePlan();render()});
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base=migratePlan(JSON.parse(d))}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:30,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:31,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s=migratePlan(plan);syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
@@ -407,7 +407,14 @@ function render(){
  
  $("taxesOut").textContent=money(b.taxes)+"/yr";$("grossIncomeOut").textContent=money(b.gross)+"/yr gross modeled income (includes reinvested dividends)";
 
- const ages=[70,75,80,85,90,95];$("milestones").innerHTML=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">UPON REACHING AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)} · Roth ${compact(z.endRoth)}</div></div>`}).join("");
+ const targetRow=c.target==null?null:p.rows.find(x=>x.age===c.target);
+ const retirementCard=`<div class="milestone milestone-summary-card"><div class="tiny">AT RETIREMENT · AGE ${Math.round(s.retirementAge)}</div><div class="metric-sm">${money(p.t)}</div><div class="tiny">VOO ${compact(p.v)} · 401(k) ${compact(p.k)} · Roth ${compact(p.roth)}</div></div>`;
+ const targetCard=targetRow
+  ?`<div class="milestone milestone-summary-card"><div class="tiny">GOAL PORTFOLIO ACHIEVED</div><div class="metric-sm">Age ${Math.round(c.target)}</div><div class="tiny">Portfolio ${compact(targetRow.t)} · target ${compact(s.targetPortfolio)}</div><div class="tiny">VOO ${compact(targetRow.v)} · 401(k) ${compact(targetRow.k)} · Roth ${compact(targetRow.roth)}</div></div>`
+  :`<div class="milestone milestone-summary-card"><div class="tiny">GOAL PORTFOLIO ACHIEVED</div><div class="metric-sm">Not reached</div><div class="tiny">Target ${compact(s.targetPortfolio)} before retirement</div></div>`;
+ const ages=[70,75,80,85,90,95];
+ const ageCards=ages.map(a=>{const z=c.ret.rows.find(x=>x.age>=a-1)||c.ret.rows.at(-1);return `<div class="milestone"><div class="tiny">UPON REACHING AGE ${a}</div><div class="metric-sm">${money(z.endTotal)}</div><div class="tiny">VOO ${compact(z.endV)} · 401(k) ${compact(z.endK)} · Roth ${compact(z.endRoth)}</div></div>`}).join("");
+ $("milestones").innerHTML=retirementCard+targetCard+ageCards;
 
  const stagesEl=$("incomeStages");
  if(stagesEl){stagesEl.innerHTML=c.stages.map(st=>{
