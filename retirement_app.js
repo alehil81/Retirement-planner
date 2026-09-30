@@ -142,9 +142,9 @@ const SPENDING_PRESETS={
 };
 const SCENARIOS={
  base:{realReturnPct:4.5,inflationPct:2.5},
- conservative:{realReturnPct:4.0,inflationPct:3.0},
- stress:{realReturnPct:3.0,inflationPct:3.5},
- strong:{realReturnPct:5.5,inflationPct:2.5}
+ conservative:{realReturnPct:3.5,inflationPct:3.0},
+ stress:{realReturnPct:2.5,inflationPct:3.5},
+ strong:{realReturnPct:6.0,inflationPct:2.5}
 };
 $("scenarioPresets").querySelectorAll("button").forEach(b=>b.onclick=()=>{
  const p=SCENARIOS[b.dataset.scenario];s.realReturnPct=p.realReturnPct;s.inflationPct=p.inflationPct;syncInputs();savePlan();render();
@@ -158,7 +158,7 @@ $("stepDownSpending").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.ste
 $("monteCarloMode").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.monteCarlo=b.dataset.mc==="on";savePlan();render()});
 $("reset").onclick=()=>{let base={...GENERIC};try{const d=localStorage.getItem(DEFAULT_KEY);if(d)base=migratePlan(JSON.parse(d))}catch(e){}s=base;syncInputs();syncDividendControls();savePlan();render()};
 $("clearLocal").onclick=()=>{if(!confirm("Clear the saved plan and your personal defaults from this browser?"))return;localStorage.removeItem(PLAN_KEY);localStorage.removeItem(DEFAULT_KEY);s={...GENERIC};syncInputs();syncDividendControls();render();$("saved").textContent="Local data cleared"};
-$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:31,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exportPlan").onclick=()=>{const payload={app:"Retirement Planner",version:32,exportedAt:new Date().toISOString(),plan:s};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="retirement-plan.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $("importPlan").onclick=()=>$("importFile").click();
 $("importFile").onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());const plan=obj.plan||obj;s=migratePlan(plan);syncInputs();syncDividendControls();savePlan();render();$("saved").textContent="Imported and saved locally"}catch(err){showWarning("Could not import that JSON plan file.")}e.target.value=""};
 
